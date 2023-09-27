@@ -9,11 +9,41 @@ router.post('/bought-tickets/add', BoughtTicketController.createBoughtTicket);
 // Get all tickets bought by Customer
 router.get('/bought-tickets', BoughtTicketController.getAllBoughtTickets);
 
+// Get all tickets bought by Customer
+router.get('/bought-tickets/:id', BoughtTicketController.getBoughtTicketByID);
+
 // Generate Receipts
-router.get('/bought-tickets/receipts', BoughtTicketController.generateReceipt);
+router.get('/bought-tickets/receipts/user', BoughtTicketController.generateReceipts);
+
+// Generate Receipt of Bought Ticket of given ID
+router.get('/bought-tickets/receipts/:id', BoughtTicketController.generateSingleReceipt);
 
 //Get all bought tickets from company of logged in Worker
 router.get('/bought-tickets/company', checkUserRole(['WORKER']), BoughtTicketController.getAllCompanyTickets);
+
+// Route to get boughtTickets by companyID
+router.get('/bought-tickets/company/:companyID', BoughtTicketController.getBoughtTicketsByCompanyID);
+
+// Get Bought Tickets for today's date
+router.get('/bought-tickets/today', BoughtTicketController.getBoughtTicketsForToday);
+
+// Get Bought Tickets for today\'s date by Company ID
+router.get('/bought-tickets/today/:companyID', BoughtTicketController.getBoughtTicketsForTodayByCompanyID);
+
+// Get Bought Tickets for current week by Company ID
+router.get('/bought-tickets/week/:companyID', BoughtTicketController.getLast7DaysRevenue);
+
+// Get Bought Tickets for current month by Company ID
+router.get('/bought-tickets/month/:companyID', BoughtTicketController.getBoughtTicketsForCurrentMonthByCompanyID);
+
+// Get Bought Tickets for the last 5 months by Company ID
+router.get('/bought-tickets/lastMonths/:companyID', BoughtTicketController.getLast6MonthsRevenue);
+
+// Get Bought Tickets for the selected date by Company ID
+router.get('/bought-tickets/by-date/:companyID/:selectedDate', BoughtTicketController.getBoughtTicketsByDate);
+
+// Delete a bought ticket by ID
+router.put('/bought-tickets/cancel/:id', BoughtTicketController.cancelBoughtTicketByID);
 
 // Delete a bought ticket by ID
 router.delete('/bought-tickets/delete/:id', checkUserRole(['WORKER']), BoughtTicketController.deleteBoughtTicketByID);

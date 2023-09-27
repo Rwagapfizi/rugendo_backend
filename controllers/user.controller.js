@@ -15,12 +15,12 @@ const isValidEmail = (email) => {
 };
 
 // Validate phone number format
-const isValidPhoneNumber = (phoneNumber) => {
-    // Regular expression for basic phone number format validation
-    // This example assumes a simple numeric phone number format (e.g., 123-456-7890)
-    const phoneRegex = /^\d{10}$/;
-    return phoneRegex.test(phoneNumber);
-};
+// const isValidPhoneNumber = (phoneNumber) => {
+//     // Regular expression for basic phone number format validation
+//     // This example assumes a simple numeric phone number format (e.g., 123-456-7890)
+//     const phoneRegex = /^\d{10}$/;
+//     return phoneRegex.test(phoneNumber);
+// };
 
 const createUser = async (req, res) => {
     // #swagger.tags = ['Users']
@@ -37,9 +37,9 @@ const createUser = async (req, res) => {
         return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    if (!isValidPhoneNumber(telephone)) {
-        return res.status(400).json({ error: 'Invalid telephone number' });
-    }
+    // if (!isValidPhoneNumber(telephone)) {
+    //     return res.status(400).json({ error: 'Invalid telephone number' });
+    // }
 
     // Check if the email, telephone, or nationalID already exist
     User.getUserByEmail(email, (emailError, existingEmailUser) => {
@@ -49,54 +49,67 @@ const createUser = async (req, res) => {
         }
 
         if (existingEmailUser) {
-            return res.status(400).json({ error: 'User with the given email already exists' });
+            return res.status(400).json({ error: 'Email already exists' });
         }
 
-        //     User.getUserByTelephone(telephone, (telephoneError, existingTelephoneUser) => {
-        //         if (telephoneError) {
-        //             console.error('Error checking telephone:', telephoneError);
-        //             return res.status(500).json({ error: 'An error occurred' });
-        //         }
-
-        //         if (existingTelephoneUser) {
-        //             return res.status(400).json({ error: 'Telephone already exists' });
-        //         }
-
-        //         User.getUserByNationalID(nationalID, (nationalIDError, existingNationalIDUser) => {
-        //             if (nationalIDError) {
-        //                 console.error('Error checking national ID:', nationalIDError);
-        //                 return res.status(500).json({ error: 'An error occurred' });
-        //             }
-
-        //             if (existingNationalIDUser) {
-        //                 return res.status(400).json({ error: 'National ID already exists' });
-        //             }
-
-        // Continue with user creation
-        bcrypt.hash(password, 10, (hashError, hashedPassword) => {
-            if (hashError) {
-                console.error('Failed to hash password:', hashError);
-                return res.status(500).json({ error: 'Failed to register user' });
+        User.getUserByTelephone(telephone, (telephoneError, existingTelephoneUser) => {
+            if (telephoneError) {
+                console.error('Error checking telephone:', telephoneError);
+                return res.status(500).json({ error: 'An error occurred' });
             }
-            const newUser = {
-                firstName,
-                lastName,
-                email,
-                telephone,
-                nationalID,
-                password: hashedPassword,
-                role
-            };
 
-            // Check if the user is a "WORKER" role
-            if (role === 'WORKER') {
-                // Fetch the company with the provided companyID
-                Company.getById(companyID, (companyError, company) => {
-                    if (companyError || !company) {
-                        res.status(400).json({ error: 'Invalid company ID' });
-                    } else {
-                        newUser.companyID = companyID; // Set the companyID
-                        // Create a new user in the database
+            if (existingTelephoneUser) {
+                return res.status(400).json({ error: 'Telephone already exists' });
+            }
+
+            User.getUserByNationalID(nationalID, (nationalIDError, existingNationalIDUser) => {
+                if (nationalIDError) {
+                    console.error('Error checking national ID:', nationalIDError);
+                    return res.status(500).json({ error: 'An error occurred' });
+                }
+
+                if (existingNationalIDUser) {
+                    return res.status(400).json({ error: 'National ID already exists' });
+                }
+
+                // Continue with user creation
+                bcrypt.hash(password, 10, (hashError, hashedPassword) => {
+                    if (hashError) {
+                        console.error('Failed to hash password:', hashError);
+                        return res.status(500).json({ error: 'Failed to register user' });
+                    }
+                    const newUser = {
+                        firstName,
+                        lastName,
+                        email,
+                        telephone,
+                        nationalID,
+                        password: hashedPassword,
+                        role
+                    };
+
+                    // Check if the user is a "WORKER" role
+                    if (role === 'WORKER') {
+                        // Fetch the company with the provided companyID
+                        Company.getById(companyID, (companyError, company) => {
+                            if (companyError || !company) {
+                                res.status(400).json({ error: 'Invalid company ID' });
+                            } else {
+                                newUser.companyID = companyID; // Set the companyID
+                                // Create a new user in the database
+                                User.create(newUser, (createError, result) => {
+                                    if (createError) {
+                                        console.error('Failed to register user:', createError);
+                                        res.status(500).json({ error: 'Failed to register user' });
+                                    } else {
+                                        res.status(201).json({ message: 'User registered successfully', user: result });
+                                    }
+                                });
+                            }
+                        });
+                    } else if (role === "CUSTOMER") {
+                        newUser.companyID = 0; // Set companyID to 0 for CUSTOMER role
+                        // If role is "CUSTOMER", create user directly without checking companyID
                         User.create(newUser, (createError, result) => {
                             if (createError) {
                                 console.error('Failed to register user:', createError);
@@ -105,34 +118,12 @@ const createUser = async (req, res) => {
                                 res.status(201).json({ message: 'User registered successfully', user: result });
                             }
                         });
-                    }
-                });
-            } else if (role === "CUSTOMER") {
-                newUser.companyID = 0; // Set companyID to 0 for CUSTOMER role
-                // If role is "CUSTOMER", create user directly without checking companyID
-                User.create(newUser, (createError, result) => {
-                    if (createError) {
-                        console.error('Failed to register user:', createError);
-                        res.status(500).json({ error: 'Failed to register user' });
                     } else {
-                        res.status(201).json({ message: 'User registered successfully', user: result });
+                        res.status(400).json({ error: 'Invalid role. User\'s role should either be CUSTOMER or WORKER' });
                     }
                 });
-            } else {
-                res.status(400).json({ error: 'Invalid role. User\'s role should either be CUSTOMER or WORKER' });
-            }
-
-            // // Create a new user in the database
-            // User.create(newUser, (createError, result) => {
-            //     if (createError) {
-            //         console.error('Failed to register user:', createError);
-            //         return res.status(500).json({ error: 'Failed to register user' });
-            //     }
-            //     return res.status(201).json({ message: 'User registered successfully', user: result });
-            // });
+            });
         });
-        //         });
-        //     });
     });
 }
 
@@ -140,6 +131,7 @@ const login = (req, res) => {
     // #swagger.tags = ['Users']
     // #swagger.description = 'Endpoint for user login'
     const { email, password } = req.body;
+    // console.log(email);
 
     // Find user by email
     User.getUserByEmail(email, (getUserError, user) => {
@@ -148,8 +140,10 @@ const login = (req, res) => {
             return res.status(500).json({ error: 'Login failed' });
         }
 
+        // console.log(user);
+
         if (!user) {
-            return res.status(401).json({ error: 'Invalid Email' });
+            return res.status(401).json({ error: 'Email doesn\'t exist' });
         }
 
         // Validate password
@@ -173,7 +167,7 @@ const login = (req, res) => {
 
             const secretKey = process.env.JWT_SECRET_KEY // Replace with your actual secret key
             const options = {
-                expiresIn: '1h' // Token expiration time
+                expiresIn: '24h' // Token expiration time
             };
 
             // const token = jwt.sign(payload, secretKey, options);
@@ -197,6 +191,7 @@ const login = (req, res) => {
 const logoutUser = (req, res) => {
     // #swagger.tags = ['Users']
     // #swagger.description = 'Endpoint to log out user'
+
     // Clear the authentication-related cookies
     if (req.cookies.authToken || req.cookies.userRole) {
         res.clearCookie('authToken');
@@ -211,14 +206,17 @@ const logoutUser = (req, res) => {
 const getUserDetails = (req, res) => {
     // #swagger.tags = ['Users']
     // #swagger.description = 'Endpoint to get details of the logged-in user'
-    // Retrieve the token from the cookie
-    const authToken = req.cookies.authToken;
 
+    // Retrieve the token from the cookie
+    const authToken = req.cookies.authToken || req.headers.authorization?.split(' ')[1];
+    // console.log(authToken)
+    
     // Verify and decode the token
     jwt.verify(authToken, jwtSecretKey, (verifyError, decoded) => {
+        // console.log(decoded)
         if (verifyError) {
             // Handle verification error
-            res.status(401).json({ error: 'Unauthorized' });
+            res.status(401).json({ error: 'Unauthorized', verifyError: verifyError });
         } else {
             // Token is valid, proceed with fetching user details
             const userID = decoded.id; // Use the decoded token payload as needed
@@ -305,9 +303,6 @@ const deleteUserById = (req, res) => {
     });
 };
 
-
-// ... other user controller functions
-
 module.exports = {
     createUser,
     getAllUsers,
@@ -315,5 +310,4 @@ module.exports = {
     login,
     getUserDetails,
     logoutUser
-    // ... other exported functions
 };

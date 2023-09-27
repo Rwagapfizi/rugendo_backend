@@ -85,6 +85,13 @@
           "Users"
         ],
         "description": "Endpoint to get all users",
+        "parameters": [
+          {
+            "name": "userrole",
+            "in": "header",
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -140,6 +147,13 @@
           "Users"
         ],
         "description": "Endpoint to get details of the logged-in user",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -204,6 +218,11 @@
         "description": "Endpoint to create a Company",
         "parameters": [
           {
+            "name": "userrole",
+            "in": "header",
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "schema": {
@@ -248,6 +267,30 @@
         }
       }
     },
+    "/companies/{id}": {
+      "get": {
+        "tags": [
+          "Companies"
+        ],
+        "description": "Endpoint to get a Company by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/companies/delete/{id}": {
       "delete": {
         "tags": [
@@ -259,6 +302,11 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userrole",
+            "in": "header",
             "type": "string"
           }
         ],
@@ -278,6 +326,79 @@
         }
       }
     },
+    "/locations": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to get all locations",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/locations/add": {
+      "post": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to create a location",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "locationName": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/locations/{id}": {
+      "delete": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to delete a location by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/ticket-formats/add": {
       "post": {
         "tags": [
@@ -286,15 +407,20 @@
         "description": "Endpoint to create a Ticket Format",
         "parameters": [
           {
+            "name": "userrole",
+            "in": "header",
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "schema": {
               "type": "object",
               "properties": {
-                "originLocation": {
+                "originLocationID": {
                   "example": "any"
                 },
-                "destinationLocation": {
+                "destinationLocationID": {
                   "example": "any"
                 },
                 "ticketTime": {
@@ -348,6 +474,145 @@
         }
       }
     },
+    "/ticket-formats/{id}": {
+      "get": {
+        "tags": [
+          "Ticket Format"
+        ],
+        "description": "Endpoint to get a Ticket Format by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/ticket-formats/by-company/{companyID}": {
+      "get": {
+        "tags": [
+          "Ticket Format"
+        ],
+        "description": "Endpoint to get all Ticket Formats owned by given Company ID",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/ticket-formats/detailed/all": {
+      "get": {
+        "tags": [
+          "Ticket Format"
+        ],
+        "description": "Endpoint to get all Ticket Formats in Details",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/ticket-formats/detailed/{id}": {
+      "get": {
+        "tags": [
+          "Ticket Format"
+        ],
+        "description": "Endpoint to get all Ticket Formats in Details",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/ticket-formats/update/{id}": {
+      "put": {
+        "tags": [
+          "Ticket Format"
+        ],
+        "description": "Endpoint to update a Ticket Format by its ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "ticketTime": {
+                  "example": "any"
+                },
+                "duration": {
+                  "example": "any"
+                },
+                "price": {
+                  "example": "any"
+                },
+                "companyID": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/ticket-formats/delete/{id}": {
       "delete": {
         "tags": [
@@ -359,6 +624,11 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userrole",
+            "in": "header",
             "type": "string"
           }
         ],
@@ -386,6 +656,11 @@
         "description": "Endpoint to create a Bought Ticket",
         "parameters": [
           {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "schema": {
@@ -394,7 +669,7 @@
                 "ticketFormatID": {
                   "example": "any"
                 },
-                "date": {
+                "ticketDate": {
                   "example": "any"
                 },
                 "plaqueNumber": {
@@ -439,15 +714,84 @@
         }
       }
     },
-    "/bought-tickets/receipts": {
+    "/bought-tickets/{id}": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to get a Bought Ticket by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/receipts/user": {
       "get": {
         "tags": [
           "Bought Ticket"
         ],
         "description": "Endpoint to generate receipts for tickets bought by the logged-in user",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/receipts/{id}": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to generate a receipt for a specific ticket bought by the logged-in user",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
           },
           "404": {
             "description": "Not Found"
@@ -464,12 +808,221 @@
           "Bought Ticket"
         ],
         "description": "Endpoint to get all bought tickets of the logged-in worker\\'s company",
+        "parameters": [
+          {
+            "name": "userrole",
+            "in": "header",
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
           },
           "403": {
             "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/company/{companyID}": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to get all bought tickets of the given companyID",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/today": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to get Bought Tickets for today\\'s date",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/today/{companyID}": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to get Bought Tickets for today\\'s date by CompanyID",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/week/{companyID}": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to get the total revenue for each of the last 7 days",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/month/{companyID}": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to get Bought Tickets for the current month by CompanyID",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/lastMonths/{companyID}": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to get the total revenue for each of the last 6 months",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/by-date/{companyID}/{selectedDate}": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to get all bought tickets of the given companyID in the given date\r  const { companyID, selectedDate } = req.params;\r \r  const ticketsForGivenDate = [];\r \r  BoughtTicket.getAllByTicketDateAndCompanyID(selectedDate, companyID, (error, boughtTickets) => {\r  if (error) {\r  console.error(`Error fetching bought tickets for ${selectedDate}:`, error);\r  return res.status(500).json({ error: `Failed to fetch bought tickets for ${selectedDate}` });\r  }\r \r  if (!boughtTickets) {\r   return res.status(200).json({ message: ",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "selectedDate",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/bought-tickets/cancel/{id}": {
+      "put": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to cancel a Bought Ticket by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -489,6 +1042,11 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "userrole",
+            "in": "header",
+            "type": "string"
           }
         ],
         "responses": {
@@ -500,6 +1058,267 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/deliveries": {
+      "get": {
+        "tags": [
+          "Delivery"
+        ],
+        "description": "Endpoint to get all Deliveries",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/deliveries/{id}": {
+      "get": {
+        "tags": [
+          "Delivery"
+        ],
+        "description": "Endpoint to get a Delivery by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Delivery"
+        ],
+        "description": "Endpoint to delete a Delivery by its ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/deliveries/detailed/{id}": {
+      "get": {
+        "tags": [
+          "Delivery"
+        ],
+        "description": "Endpoint to get a Detailed Delivery by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/deliveries/company/{companyID}": {
+      "get": {
+        "tags": [
+          "Delivery"
+        ],
+        "description": "Endpoint to get all deliveries of the given companyID",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/deliveries/add": {
+      "post": {
+        "tags": [
+          "Delivery"
+        ],
+        "description": "Endpoint to create a Delivery",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "SenderID": {
+                  "example": "any"
+                },
+                "TicketFormatID": {
+                  "example": "any"
+                },
+                "Description": {
+                  "example": "any"
+                },
+                "ReceiverName": {
+                  "example": "any"
+                },
+                "ReceiverPhone": {
+                  "example": "any"
+                },
+                "DeliveryDate": {
+                  "example": "any"
+                },
+                "TimeForDelivery": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/mtn-token": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/requestToPay": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-reference-id",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/mtn-payment-status/{referenceId}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "referenceId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/send-to-email": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "subject",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "req.headersData": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           },
           "500": {
             "description": "Internal Server Error"

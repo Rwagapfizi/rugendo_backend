@@ -52,7 +52,22 @@ const getAllCompanies = (req, res) => {
             console.error('Failed to fetch companies:', error);
             res.status(500).json({ error: 'Failed to fetch companies' });
         } else {
-            res.status(200).json({ companies });
+            res.status(200).json(companies);
+        }
+    });
+};
+
+const getCompanyByID = (req, res) => {
+    // #swagger.tags = ['Companies']
+    // #swagger.description = 'Endpoint to get a Company by ID'
+    const companyID = req.params.id;
+
+    Company.getById(companyID, (error, company) => {
+        if (error) {
+            console.error('Failed to fetch companies:', error);
+            res.status(500).json({ error: 'Failed to fetch companies' });
+        } else {
+            res.status(200).json(company);
         }
     });
 };
@@ -80,5 +95,6 @@ const deleteCompanyByCompanyID = (req, res) => {
 module.exports = {
     createCompany,
     getAllCompanies,
+    getCompanyByID,
     deleteCompanyByCompanyID
 };

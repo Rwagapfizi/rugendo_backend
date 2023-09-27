@@ -4,7 +4,7 @@ const Company = require('../models/company.model')
 const createTicketFormat = (req, res) => {
     // #swagger.tags = ['Ticket Format']
     // #swagger.description = 'Endpoint to create a Ticket Format'
-    const { originLocation, destinationLocation, ticketTime, distance, duration, price, companyID } = req.body;
+    const { originLocationID, destinationLocationID, ticketTime, distance, duration, price, companyID, plaqueNumber, maxSeats } = req.body;
 
     // Check if the company with the given companyID exists
     Company.getById(companyID, (companyError, existingCompany) => {
@@ -18,13 +18,15 @@ const createTicketFormat = (req, res) => {
         }
 
         const newTicketFormat = {
-            originLocation,
-            destinationLocation,
+            originLocation: originLocationID,
+            destinationLocation: destinationLocationID,
             ticketTime,
             distance,
             duration,
             price,
-            companyID
+            companyID,
+            plaqueNumber,
+            maxSeats
         };
 
         TicketFormat.create(newTicketFormat, (createError, result) => {
@@ -46,8 +48,145 @@ const getAllTicketFormats = (req, res) => {
             console.error('Failed to fetch ticket formats:', error);
             res.status(500).json({ error: 'Failed to fetch ticket formats' });
         } else {
-            res.status(200).json({ ticketFormats });
+            res.status(200).json(ticketFormats);
         }
+    });
+};
+
+const getTicketFormatByID = (req, res) => {
+    // #swagger.tags = ['Ticket Format']
+    // #swagger.description = 'Endpoint to get a Ticket Format by ID'
+    const ticketFormatID = req.params.id;
+
+    TicketFormat.getById(ticketFormatID, (error, ticketFormat) => {
+        if (error) {
+            console.error('Failed to fetch ticket formats:', error);
+            res.status(500).json({ error: 'Failed to fetch ticket formats' });
+        } else {
+            res.status(200).json(ticketFormat);
+        }
+    });
+};
+
+const getDetailedTicketFormats = (req, res) => {
+    // #swagger.tags = ['Ticket Format']
+    // #swagger.description = 'Endpoint to get all Ticket Formats in Details'
+    TicketFormat.getAllDetailed((error, ticketFormats) => {
+    // TicketFormat.getAll((error, ticketFormats) => {
+        
+        if (error) {
+            console.error('Failed to fetch ticket formats:', error);
+            res.status(500).json({ error: 'Failed to fetch ticket formats' });
+        } else {
+            res.status(200).json(ticketFormats);
+        }
+    });
+};
+
+const getDetailedTicketFormatByID = (req, res) => {
+    // #swagger.tags = ['Ticket Format']
+    // #swagger.description = 'Endpoint to get all Ticket Formats in Details'
+    const ticketFormatID = req.params.id;
+    TicketFormat.getDetailedByID(ticketFormatID, (error, ticketFormat) => {
+    // TicketFormat.getAll((error, ticketFormats) => {
+        
+        if (error) {
+            console.error('Failed to fetch ticket formats:', error);
+            res.status(500).json({ error: 'Failed to fetch ticket formats' });
+        } else {
+            res.status(200).json(ticketFormat);
+        }
+    });
+};
+
+const getTicketFormatsByCompany = (req, res) => {
+    // #swagger.tags = ['Ticket Format']
+    // #swagger.description = 'Endpoint to get all Ticket Formats owned by given Company ID'
+    const companyID = req.params.companyID;
+    const ticketsWithSeats = []
+    TicketFormat.getAllByCompanyID(companyID, (error, ticketFormats) => {
+        if (error) {
+            console.error('Failed to fetch ticket formats:', error);
+            res.status(500).json({ error: 'Failed to fetch ticket formats' });
+        } else {
+            const fetchTicketFormatDetails = (ticket) => {
+
+                const ticketWithFormat = {
+                    id: ticket.id,
+                    originLocationID: ticket.originLocationID,
+                    originLocation: ticket.originLocation,
+                    destinationLocationID: ticket.destinationLocationID,
+                    destinationLocation: ticket.destinationLocation,
+                    ticketTime:ticket.ticketTime,
+                    distance: ticket.distance,
+                    duration: ticket.duration,
+                    price: ticket.price,
+                    companyID: ticket.companyID,
+                    plaqueNumber: ticket.plaqueNumber,
+                    maxSeats: ticket.maxSeats,
+                    // seatsLeft: 30,
+                };
+
+                ticketsWithSeats.push(ticketWithFormat);
+
+                // Check if all tickets have been processed
+                if (ticketsWithSeats.length === ticketFormats.length) {
+                    res.status(200).json(ticketsWithSeats);
+                }
+                // });
+            };
+
+            ticketFormats.forEach((ticket) => {
+                fetchTicketFormatDetails(ticket);
+            });
+        }
+    });
+};
+
+const updateTicketFormatByID = (req, res) => {
+    // #swagger.tags = ['Ticket Format']
+    // #swagger.description = 'Endpoint to update a Ticket Format by its ID'
+    const ticketFormatID = req.params.id;
+    const { ticketTime, duration, price, plaqueNumber, maxSeats, companyID } = req.body;
+
+    // Check if the company with the given companyID exists
+    Company.getById(companyID, (companyError, existingCompany) => {
+        if (companyError) {
+            console.error('Failed to fetch company:', companyError);
+            return res.status(500).json({ error: 'Failed to update ticket format' });
+        }
+
+        if (!existingCompany) {
+            return res.status(400).json({ error: 'Company with the given ID does not exist' });
+        }
+
+        const updatedTicketFormat = {
+            ticketTime,
+            duration,
+            price,
+            plaqueNumber,
+            maxSeats
+        };
+
+        TicketFormat.updateByID(ticketFormatID, updatedTicketFormat, (updateError, updatedTicketFormat) => {
+            if (updateError) {
+                console.error('Failed to update ticket format:', updateError);
+                res.status(500).json({ error: 'Failed to update ticket format' });
+            } else if (!updatedTicketFormat) {
+                res.status(404).json({ error: 'Ticket format not found' });
+            } else {
+                // res.status(200).json({ message: 'Ticket format updated successfully', updatedTicketFormat: updatedTicketFormat });
+                // Fetch the updated ticket format to return in the response
+                TicketFormat.getById(ticketFormatID, (fetchError, fetchedUpdatedTicketFormat) => {
+                    if (fetchError) {
+                        console.error('Failed to fetch updated ticket format:', fetchError);
+                        res.status(500).json({ error: 'Failed to update ticket format' });
+                    } else {
+                        res.status(200).json({ message: 'Ticket format updated successfully', updatedTicketFormat: fetchedUpdatedTicketFormat });
+                    }
+                });
+            }
+        });
     });
 };
 
@@ -71,5 +210,10 @@ const deleteTicketFormatByID = (req, res) => {
 module.exports = {
     createTicketFormat,
     getAllTicketFormats,
-    deleteTicketFormatByID
+    getTicketFormatByID,
+    deleteTicketFormatByID,
+    getDetailedTicketFormats,
+    getDetailedTicketFormatByID,
+    getTicketFormatsByCompany,
+    updateTicketFormatByID
 };

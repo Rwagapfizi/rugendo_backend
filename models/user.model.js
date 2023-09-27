@@ -60,7 +60,7 @@ class User {
     }
 
     static getUserById(userID, callback) {
-        const query = 'SELECT * FROM Users WHERE id = ?';
+        const query = 'SELECT * FROM users WHERE id = ?';
         pool.query(query, [userID], (error, results) => {
             if (error) {
                 console.error('Error fetching user by ID:', error);
@@ -93,6 +93,7 @@ class User {
             if (error) {
                 return callback(error);
             }
+            // console.log('Query results:', results);
             if (results.length === 0) {
                 return callback(null, null); // No user found
             }
@@ -113,7 +114,7 @@ class User {
     }
 
     static getUserByTelephone = (telephone, callback) => {
-        const query = 'SELECT * FROM Users WHERE telephone = ?';
+        const query = 'SELECT * FROM users WHERE telephone = ?';
         pool.query(query, [telephone], (error, results) => {
             if (error) {
                 console.error('Error querying user by telephone:', error);
@@ -141,7 +142,7 @@ class User {
     };
 
     static getUserByNationalID = (nationalID, callback) => {
-        const query = 'SELECT * FROM Users WHERE nationalID = ?';
+        const query = 'SELECT * FROM users WHERE nationalID = ?';
         pool.query(query, [nationalID], (error, results) => {
             if (error) {
                 console.error('Error querying user by national ID:', error);
@@ -169,7 +170,7 @@ class User {
     };
 
     static deleteById(userId, callback) {
-        const query = 'DELETE FROM Users WHERE id = ?';
+        const query = 'DELETE FROM users WHERE id = ?';
         pool.query(query, [userId], (error, result) => {
             if (error) {
                 console.error('Error deleting user by ID:', error);

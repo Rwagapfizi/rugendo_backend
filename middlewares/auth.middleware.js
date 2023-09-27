@@ -4,7 +4,9 @@ const jwtSecretKey = process.env.JWT_SECRET_KEY
 
 const authenticateMiddleware = (req, res, next) => {
     // Retrieve the token from the cookie
-    const authToken = req.cookies.authToken;
+    // console.log(req.cookies)
+    // console.log(req.headers.authorization?.split(' ')[1])
+    const authToken = req.cookies.authToken || req.headers.authorization?.split(' ')[1];
 
     // Verify and decode the token
     jwt.verify(authToken, jwtSecretKey, (verifyError, decoded) => {
@@ -17,9 +19,7 @@ const authenticateMiddleware = (req, res, next) => {
 
             // Set the user's role in the cookies after successful authentication
             const userRole = decoded.role;
-            // const userCompanyID = decoded.role;
             res.cookie('userRole', userRole);
-            // res.cookie('userCompany', userCompanyID);
 
             // Store the user's role in the request object for further middleware
             req.user = {

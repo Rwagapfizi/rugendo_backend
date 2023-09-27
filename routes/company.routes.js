@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.post('/companies/add', checkUserRole(['WORKER']),CompanyController.createCompany);
 router.get('/companies/getCompanies', CompanyController.getAllCompanies);
+router.get('/companies/:id', CompanyController.getCompanyByID);
 router.delete('/companies/delete/:id', checkUserRole(['WORKER']), CompanyController.deleteCompanyByCompanyID);
 // ... other company routes
 

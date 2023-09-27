@@ -22,7 +22,7 @@ class Company {
     }
 
     static getById(companyID, callback) {
-        const query = 'SELECT * FROM Companies WHERE companyID = ?';
+        const query = 'SELECT * FROM companies WHERE companyID = ?';
         pool.query(query, [companyID], (error, results) => {
             if (error) {
                 console.error('Error fetching company by ID:', error);
@@ -79,7 +79,7 @@ class Company {
     
 
     static deleteByCompanyID(companyID, callback) {
-        const query = 'DELETE FROM Companies WHERE companyID = ?';
+        const query = 'DELETE FROM companies WHERE companyID = ?';
         pool.query(query, [companyID], (error, result) => {
             if (error) {
                 console.error('Error deleting company by ID:', error);

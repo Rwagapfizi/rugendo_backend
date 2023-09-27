@@ -6,15 +6,18 @@ const swaggerFile = require('./autogened-swagger.json');
 const cors = require('cors')
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const pool = require('./utils/mysql') 
+const pool = require('./utils/mysql')
 const userRoutes = require('./routes/user.routes')
 const companyRoutes = require('./routes/company.routes')
 const ticketFormatRoutes = require('./routes/ticketFormat.routes')
 const BoughtTicketRoutes = require('./routes/boughtTicket.routes')
-// const employeeRoutes = require('./routes/employee.routes')
+const LocationRoutes = require('./routes/location.routes')
+const MomoRoutes = require('./routes/momoProxy.routes')
+const DeliveriesRoutes = require('./routes/delivery.routes')
 
 const port = process.env.SERVER_PORT || 5000;
 
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -22,6 +25,9 @@ app.use(userRoutes)
 app.use(companyRoutes)
 app.use(ticketFormatRoutes)
 app.use(BoughtTicketRoutes)
+app.use(LocationRoutes)
+app.use(DeliveriesRoutes)
+app.use(MomoRoutes)
 app.use(cors());
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 
@@ -31,9 +37,6 @@ pool.getConnection((error, connection) => {
         return;
     }
     console.log('Connected to MySQL database');
-
-    // Release the connection
-    // connection.release();
 
     // Start the server
     app.listen(port, () => {

@@ -3,9 +3,9 @@ const express = require('express');
 const app = express()
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const jwtSecretKey = process.env.JWT_SECRET_KEY
 const User = require('../models/user.model');
 const Company = require('../models/company.model');
-const jwtSecretKey = process.env.JWT_SECRET_KEY
 
 // Validate email format
 const isValidEmail = (email) => {

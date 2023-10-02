@@ -1,7 +1,16 @@
 const swaggerAutogen = require('swagger-autogen')()
 
 const outputFile = './autogened-swagger.json'
-const endpointsFiles = ['./routes/user.routes.js', './routes/company.routes.js', './routes/location.routes.js', './routes/ticketFormat.routes.js', './routes/boughtTicket.routes.js', './routes/delivery.routes.js', './routes/momoProxy.routes.js']
+const endpointsFiles = [
+    './routes/user.routes.js', 
+    './routes/company.routes.js', 
+    './routes/location.routes.js', 
+    './routes/ticketFormat.routes.js', 
+    './routes/boughtTicket.routes.js', 
+    './routes/bus.routes.js',
+    // './routes/delivery.routes.js', 
+    './routes/momoProxy.routes.js',
+]
 const doc = {
     info: {
         version: "1.0.0",

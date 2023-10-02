@@ -1,6 +1,7 @@
 {
   "ignore": [
-    "autogen-swagger.json",
-    "public/swagger"
+    "autogened-swagger.json",
+    "public/swagger",
+    "swagger"
   ]
 }

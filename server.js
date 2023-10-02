@@ -14,10 +14,12 @@ const BoughtTicketRoutes = require('./routes/boughtTicket.routes')
 const LocationRoutes = require('./routes/location.routes')
 const MomoRoutes = require('./routes/momoProxy.routes')
 const DeliveriesRoutes = require('./routes/delivery.routes')
+const BusesRoutes = require('./routes/bus.routes')
 
 const port = process.env.SERVER_PORT || 5000;
 
-app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
+// app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
+app.use(cors({ credentials: true, origin: '*' }));
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -26,8 +28,9 @@ app.use(companyRoutes)
 app.use(ticketFormatRoutes)
 app.use(BoughtTicketRoutes)
 app.use(LocationRoutes)
-app.use(DeliveriesRoutes)
+// app.use(DeliveriesRoutes)
 app.use(MomoRoutes)
+app.use(BusesRoutes)
 app.use(cors());
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 

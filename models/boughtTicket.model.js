@@ -1,5 +1,6 @@
 const pool = require('../utils/mysql');
-const moment = require('moment');
+// const moment = require('moment');
+const moment = require('moment-timezone');
 
 class BoughtTicket {
     constructor(id, customerID, ticketFormatID, ticketDate, plaqueNumber, paymentMethodUsed, timeBought, status) {
@@ -100,14 +101,102 @@ class BoughtTicket {
                 return callback(error);
             }
 
-            const boughtTickets = results.map(row => ({
+            const boughtTickets = results.map(row => {
+
+                // Parse the `ticketDate` string into a JavaScript Date object
+                const date = new Date(row.ticketDate);
+
+                // Add 2 hours to the date
+                date.setHours(date.getHours() + 2);
+
+                // Format the modified date back to a string
+                const formattedTicketDate = date.toISOString();
+                return {
+                    // Map the retrieved data to the required format
+                    // Include ticketFormat and company details
+                    id: row.id,
+                    customerID: row.customerID,
+
+                    ticketFormatID: row.ticketFormatID,
+                    // ticketDate: row.ticketDate,
+                    ticketDate: row.ticketDate,
+                    // ticketDate: moment(row.ticketDate).tz('Africa/Kigali').format(),
+                    // ticketDate: Date(row.ticketDate).setHours(Date(row.ticketDate).getHours() + 2).toISOString(),
+                    plaqueNumber: row.plaqueNumber,
+                    paymentMethodUsed: row.paymentMethodUsed,
+                    timeBought: row.timeBought,
+                    status: row.status,
+                    // Include ticketFormat details
+                    ticketFormat: {
+                        originLocation: row.originLocation,
+                        destinationLocation: row.destinationLocation,
+                        ticketTime: row.ticketTime,
+                        price: row.price,
+                        distance: row.distance,
+                        duration: row.duration,
+                        plaqueNumber: row.plaqueNumber,
+                        maxSeats: row.maxSeats,
+                    },
+                    // Include company details
+                    company: {
+                        companyName: row.companyName,
+                    },
+                }
+            });
+
+
+            // console.log(customerID)
+            callback(null, boughtTickets);
+        });
+    }
+
+    static getByIDAndCustomerID(ticketID, customerID, callback) {
+        const query = `
+          SELECT bt.*,loc_origin.location_name AS originLocation,
+          loc_dest.location_name AS destinationLocation,
+          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.plaqueNumber, tf.maxSeats, c.companyName
+          
+          FROM boughttickets bt
+          INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
+          INNER JOIN companies c ON tf.companyID = c.companyID
+          JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
+          JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
+          WHERE bt.id = ? AND bt.customerID = ?
+        `;
+
+        pool.query(query, [ticketID, customerID], (error, results) => {
+            if (error) {
+                return callback(error);
+            }
+
+            if (results.length === 0) {
+                // No matching ticket found
+                return callback(null, null);
+            }
+
+            const row = results[0];
+
+            // Convert the database date (which may be in UTC) to your desired timezone
+            const ticketDate = moment(row.ticketDate).tz('Africa/Kigali').format();
+
+            // Parse the date string into a JavaScript Date object
+            // const date = new Date(row.ticketDate);
+
+            // // Add 2 hours to the date
+            // date.setHours(date.getHours() + 2);
+
+            // // Format the date as a string
+            // const formattedTicketDate = date.toISOString();
+
+            // const boughtTickets = results.map(row => ({
+            const boughtTicket = {
                 // Map the retrieved data to the required format
                 // Include ticketFormat and company details
                 id: row.id,
                 customerID: row.customerID,
-
                 ticketFormatID: row.ticketFormatID,
-                ticketDate: row.ticketDate,
+                // ticketDate: row.ticketDate,
+                ticketDate: ticketDate,
                 plaqueNumber: row.plaqueNumber,
                 paymentMethodUsed: row.paymentMethodUsed,
                 timeBought: row.timeBought,
@@ -127,11 +216,11 @@ class BoughtTicket {
                 company: {
                     companyName: row.companyName,
                 },
-            }));
+            };
 
+            // console.log(boughtTicket)
 
-            // console.log(customerID)
-            callback(null, boughtTickets);
+            callback(null, boughtTicket);
         });
     }
 
@@ -191,64 +280,130 @@ class BoughtTicket {
         });
     }
 
-    static getByIDAndCustomerID(ticketID, customerID, callback) {
+    static getAllByTodaysDateAndCompanyID(date, companyID, callback) {
         const query = `
-          SELECT bt.*,loc_origin.location_name AS originLocation,
-          loc_dest.location_name AS destinationLocation,
-          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.plaqueNumber, tf.maxSeats, c.companyName
-          
-          FROM boughttickets bt
-          INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
-          INNER JOIN companies c ON tf.companyID = c.companyID
-          JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
-          JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
-          WHERE bt.id = ? AND bt.customerID = ?
+            SELECT bt.*, us.firstName, us.lastName, us.telephone, us.nationalID, loc_origin.location_name AS originLocation,
+            loc_dest.location_name AS destinationLocation,
+            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.plaqueNumber, tf.maxSeats, c.companyName
+            
+            FROM boughttickets bt
+            INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
+            INNER JOIN companies c ON tf.companyID = c.companyID
+            INNER JOIN users us ON bt.customerID = us.id
+            JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
+            JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
+            WHERE tf.companyID = ? AND bt.ticketDate = '${date}'
         `;
 
-        pool.query(query, [ticketID, customerID], (error, results) => {
+        // console.log(query)
+        pool.query(query, [companyID], (error, results) => {
             if (error) {
-                return callback(error);
+                return callback(error, null);
             }
 
-            if (results.length === 0) {
-                // No matching ticket found
-                return callback(null, null);
-            }
-
-            const row = results[0];
-
-            // const boughtTickets = results.map(row => ({
-            const boughtTicket = {
-                // Map the retrieved data to the required format
-                // Include ticketFormat and company details
-                id: row.id,
-                customerID: row.customerID,
-                ticketFormatID: row.ticketFormatID,
-                ticketDate: row.ticketDate,
-                plaqueNumber: row.plaqueNumber,
-                paymentMethodUsed: row.paymentMethodUsed,
-                timeBought: row.timeBought,
-                status: row.status,
-                // Include ticketFormat details
-                ticketFormat: {
-                    originLocation: row.originLocation,
-                    destinationLocation: row.destinationLocation,
+            
+            const boughtTickets = results.map(row => {
+                
+                // console.log(row)
+                return {
+                    id: row.id,
+                    customerID: row.customerID,
+                    // customer: {
+                    customerNames: `${row.firstName} ${row.lastName}`,
+                    customerTelephone: row.telephone,
+                    customerNID: row.nationalID,
+                    // },
+                    // ticketFormatID: row.ticketFormatID,
+                    ticketDate: row.ticketDate,
+                    // plaqueNumber: row.plaqueNumber,
+                    paymentMethodUsed: row.paymentMethodUsed,
+                    timeBought: row.timeBought,
+                    location: `From ${row.originLocation} to ${row.destinationLocation}`,
+                    // Include ticketFormat details
+                    // ticketFormat: {
+                    // originLocation: row.originLocation,
+                    // destinationLocation: row.destinationLocation,
                     ticketTime: row.ticketTime,
-                    price: row.price,
-                    distance: row.distance,
-                    duration: row.duration,
+                    status: row.status,
                     plaqueNumber: row.plaqueNumber,
                     maxSeats: row.maxSeats,
-                },
-                // Include company details
-                company: {
-                    companyName: row.companyName,
-                },
-            };
+                    // price: row.price,
+                    // distance: row.distance,
+                    // duration: row.duration,
+                    // },
+                    // Include company details
+                    // company: {
+                    // companyName: row.companyName,
+                    // },
+                }
+            });
 
-            // console.log(boughtTicket)
+            callback(null, boughtTickets);
+        });
+    }
 
-            callback(null, boughtTicket);
+    static getAllAssignedByTodaysDateAndCompanyID(date, companyID, callback) {
+        const query = `
+            SELECT bt.*, us.firstName, us.lastName, us.telephone, us.nationalID, loc_origin.location_name AS originLocation,
+            loc_dest.location_name AS destinationLocation,
+            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.plaqueNumber, tf.maxSeats, c.companyName,
+            bus.plaqueNumber AS plaque
+            
+            FROM boughttickets bt
+            INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
+            INNER JOIN companies c ON tf.companyID = c.companyID
+            INNER JOIN users us ON bt.customerID = us.id
+            INNER JOIN ticketAssignments ta ON bt.id = ta.boughtTicketID
+            INNER JOIN buses bus ON ta.busID = bus.id
+            JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
+            JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
+            WHERE tf.companyID = ? AND bt.ticketDate = '${date}'
+        `;
+
+        // console.log(query)
+        pool.query(query, [companyID], (error, results) => {
+            if (error) {
+                return callback(error, null);
+            }
+
+            
+            const boughtTickets = results.map(row => {
+                
+                // console.log(row)
+                return {
+                    id: row.id,
+                    customerID: row.customerID,
+                    // customer: {
+                    customerNames: `${row.firstName} ${row.lastName}`,
+                    customerTelephone: row.telephone,
+                    customerNID: row.nationalID,
+                    // },
+                    // ticketFormatID: row.ticketFormatID,
+                    ticketDate: row.ticketDate,
+                    // plaqueNumber: row.plaqueNumber,
+                    paymentMethodUsed: row.paymentMethodUsed,
+                    timeBought: row.timeBought,
+                    location: `From ${row.originLocation} to ${row.destinationLocation}`,
+                    // Include ticketFormat details
+                    // ticketFormat: {
+                    // originLocation: row.originLocation,
+                    // destinationLocation: row.destinationLocation,
+                    ticketTime: row.ticketTime,
+                    status: row.status,
+                    plaqueNumber: row.plaque,
+                    maxSeats: row.maxSeats,
+                    // price: row.price,
+                    // distance: row.distance,
+                    // duration: row.duration,
+                    // },
+                    // Include company details
+                    // company: {
+                    // companyName: row.companyName,
+                    // },
+                }
+            });
+
+            callback(null, boughtTickets);
         });
     }
 
@@ -456,6 +611,21 @@ class BoughtTicket {
             }
 
             return callback(null, { id: boughtTicketID }); // Return the deleted bought ticket's ID
+        });
+    }
+
+    static updateTicketDate(ticketID, newTicketDate, callback) {
+        const query = 'UPDATE boughttickets SET ticketDate = ? WHERE id = ?';
+        pool.query(query, [newTicketDate, ticketID], (error, result) => {
+            if (error) {
+                return callback(error, null);
+            }
+
+            if (result.affectedRows === 0) {
+                return callback(null, null); // No matching ticket found
+            }
+
+            callback(null, { id: ticketID, ticketDate: newTicketDate });
         });
     }
 

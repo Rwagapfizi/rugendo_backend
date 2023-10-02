@@ -639,8 +639,28 @@ const getBoughtTicketsByCompanyID = (req, res) => {
     // #swagger.tags = ['Bought Ticket']
     // #swagger.description = 'Endpoint to get all bought tickets of the given companyID'
     const { companyID } = req.params;
-
+    
     BoughtTicket.getAllByCompanyID(companyID, (error, boughtTickets) => {
+        if (error) {
+            return res.status(500).json({ error: 'Failed to fetch boughtTickets' });
+        }
+        
+        if (!boughtTickets || boughtTickets.length === 0) {
+            return res.status(404).json({ message: 'No boughtTickets found for the provided companyID' });
+        }
+
+        res.status(200).json(boughtTickets);
+    });
+};
+
+const getBoughtTicketsByCompanyIDToday = (req, res) => {
+    // #swagger.tags = ['Bought Ticket']
+    // #swagger.description = 'Endpoint to get all bought tickets of the given companyID'
+    const { companyID } = req.params;
+    // console.log (companyID)
+    const todayDate = moment().format('YYYY-MM-DD');
+
+    BoughtTicket.getAllByTodaysDateAndCompanyID(todayDate, companyID, (error, boughtTickets) => {
         if (error) {
             return res.status(500).json({ error: 'Failed to fetch boughtTickets' });
         }
@@ -649,6 +669,28 @@ const getBoughtTicketsByCompanyID = (req, res) => {
             return res.status(404).json({ message: 'No boughtTickets found for the provided companyID' });
         }
 
+        // console.log(boughtTickets)
+        res.status(200).json(boughtTickets);
+    });
+};
+
+const getAssignedBoughtTicketsByCompanyIDToday = (req, res) => {
+    // #swagger.tags = ['Bought Ticket']
+    // #swagger.description = 'Endpoint to get all bought tickets of the given companyID'
+    const { companyID } = req.params;
+    // console.log (companyID)
+    const todayDate = moment().format('YYYY-MM-DD');
+
+    BoughtTicket.getAllAssignedByTodaysDateAndCompanyID(todayDate, companyID, (error, boughtTickets) => {
+        if (error) {
+            return res.status(500).json({ error: 'Failed to fetch boughtTickets' });
+        }
+
+        if (!boughtTickets || boughtTickets.length === 0) {
+            return res.status(404).json({ message: 'No boughtTickets found for the provided companyID' });
+        }
+
+        // console.log(boughtTickets)
         res.status(200).json(boughtTickets);
     });
 };
@@ -908,6 +950,28 @@ const cancelBoughtTicketByID = (req, res) => {
     });
 };
 
+// Controller method to update ticketDate
+const updateTicketDate = (req, res) => {
+    // #swagger.tags = ['Bought Ticket']
+    // #swagger.description = 'Endpoint to update a Bought Ticket\'s ticket date by ID'
+
+    const ticketID = req.params.id;
+    const { newTicketDate } = req.body; 
+
+    BoughtTicket.updateTicketDate(ticketID, newTicketDate, (error, updatedTicket) => {
+        if (error) {
+            console.error('Error updating ticket date:', error);
+            return res.status(500).json({ error: 'Failed to update ticketDate.' });
+        }
+
+        if (!updatedTicket) {
+            return res.status(404).json({ error: 'Ticket not found.' });
+        }
+
+        res.status(200).json({ message: 'TicketDate updated successfully.', updatedTicket });
+    });
+};
+
 module.exports = {
     createBoughtTicket,
     getAllBoughtTickets,
@@ -924,5 +988,8 @@ module.exports = {
     getBoughtTicketsByDate,
     getBoughtTicketByID,
     getBoughtTicketsByCompanyID,
-    cancelBoughtTicketByID
+    getBoughtTicketsByCompanyIDToday,
+    getAssignedBoughtTicketsByCompanyIDToday,
+    cancelBoughtTicketByID,
+    updateTicketDate
 };

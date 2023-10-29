@@ -4,7 +4,7 @@ const Company = require('../models/company.model')
 const createTicketFormat = (req, res) => {
     // #swagger.tags = ['Ticket Format']
     // #swagger.description = 'Endpoint to create a Ticket Format'
-    const { originLocationID, destinationLocationID, ticketTime, distance, duration, price, companyID, plaqueNumber, maxSeats } = req.body;
+    const { originLocationID, destinationLocationID, ticketTime, distance, duration, price, companyID, busID, priceStandard } = req.body;
 
     // Check if the company with the given companyID exists
     Company.getById(companyID, (companyError, existingCompany) => {
@@ -25,9 +25,11 @@ const createTicketFormat = (req, res) => {
             duration,
             price,
             companyID,
-            plaqueNumber,
-            maxSeats
+            busID,
+            priceStandard
         };
+
+        // console.log("Ticket Controller: ", newTicketFormat)
 
         TicketFormat.create(newTicketFormat, (createError, result) => {
             if (createError) {
@@ -122,8 +124,11 @@ const getTicketFormatsByCompany = (req, res) => {
                     duration: ticket.duration,
                     price: ticket.price,
                     companyID: ticket.companyID,
+                    busID: ticket.busID,
+                    route: ticket.route,
+                    priceStandard: ticket.priceStandard,
                     plaqueNumber: ticket.plaqueNumber,
-                    maxSeats: ticket.maxSeats,
+                    maxCapacity: ticket.maxCapacity,
                     // seatsLeft: 30,
                 };
 
@@ -147,7 +152,7 @@ const updateTicketFormatByID = (req, res) => {
     // #swagger.tags = ['Ticket Format']
     // #swagger.description = 'Endpoint to update a Ticket Format by its ID'
     const ticketFormatID = req.params.id;
-    const { ticketTime, duration, price, plaqueNumber, maxSeats, companyID } = req.body;
+    const { ticketTime, busID, companyID } = req.body;
 
     // Check if the company with the given companyID exists
     Company.getById(companyID, (companyError, existingCompany) => {
@@ -162,10 +167,7 @@ const updateTicketFormatByID = (req, res) => {
 
         const updatedTicketFormat = {
             ticketTime,
-            duration,
-            price,
-            plaqueNumber,
-            maxSeats
+            busID
         };
 
         TicketFormat.updateByID(ticketFormatID, updatedTicketFormat, (updateError, updatedTicketFormat) => {

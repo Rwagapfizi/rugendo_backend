@@ -86,11 +86,13 @@ class BoughtTicket {
         const query = `
           SELECT bt.*, loc_origin.location_name AS originLocation,
           loc_dest.location_name AS destinationLocation,
-          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.plaqueNumber, tf.maxSeats, c.companyName
+          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
           
           FROM boughttickets bt
           INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
           INNER JOIN companies c ON tf.companyID = c.companyID
+          JOIN buses b ON tf.busID = b.id
+          LEFT JOIN priceStandards pa ON tf.priceStandard = pa.id
           JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
           JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
           WHERE bt.customerID = ?
@@ -134,8 +136,10 @@ class BoughtTicket {
                         price: row.price,
                         distance: row.distance,
                         duration: row.duration,
+                        priceStandard: row.priceStandard,
+                        route: row.description,
                         plaqueNumber: row.plaqueNumber,
-                        maxSeats: row.maxSeats,
+                        maxCapacity: row.maxCapacity,
                     },
                     // Include company details
                     company: {
@@ -154,11 +158,13 @@ class BoughtTicket {
         const query = `
           SELECT bt.*,loc_origin.location_name AS originLocation,
           loc_dest.location_name AS destinationLocation,
-          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.plaqueNumber, tf.maxSeats, c.companyName
+          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
           
           FROM boughttickets bt
           INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
           INNER JOIN companies c ON tf.companyID = c.companyID
+          JOIN buses b ON tf.busID = b.id
+          LEFT JOIN priceStandards pa ON tf.priceStandard = pa.id
           JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
           JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
           WHERE bt.id = ? AND bt.customerID = ?
@@ -209,8 +215,10 @@ class BoughtTicket {
                     price: row.price,
                     distance: row.distance,
                     duration: row.duration,
+                    priceStandard: row.priceStandard,
+                    route: row.description,
                     plaqueNumber: row.plaqueNumber,
-                    maxSeats: row.maxSeats,
+                    maxCapacity: row.maxCapacity,
                 },
                 // Include company details
                 company: {
@@ -228,12 +236,14 @@ class BoughtTicket {
         const query = `
             SELECT bt.*, us.firstName, us.lastName, us.telephone, us.nationalID, loc_origin.location_name AS originLocation,
             loc_dest.location_name AS destinationLocation,
-            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.plaqueNumber, tf.maxSeats, c.companyName
+            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
             
             FROM boughttickets bt
             INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
             INNER JOIN companies c ON tf.companyID = c.companyID
             INNER JOIN users us ON bt.customerID = us.id
+            JOIN buses b ON tf.busID = b.id
+            LEFT JOIN priceStandards pa ON tf.priceStandard = pa.id
             JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
             JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
             WHERE tf.companyID = ?
@@ -247,33 +257,22 @@ class BoughtTicket {
             const boughtTickets = results.map(row => ({
                 id: row.id,
                 customerID: row.customerID,
-                // customer: {
                 customerNames: `${row.firstName} ${row.lastName}`,
                 customerTelephone: row.telephone,
                 customerNID: row.nationalID,
                 // },
                 // ticketFormatID: row.ticketFormatID,
                 ticketDate: row.ticketDate,
-                // plaqueNumber: row.plaqueNumber,
                 paymentMethodUsed: row.paymentMethodUsed,
                 timeBought: row.timeBought,
                 location: `From ${row.originLocation} to ${row.destinationLocation}`,
-                // Include ticketFormat details
-                // ticketFormat: {
-                // originLocation: row.originLocation,
-                // destinationLocation: row.destinationLocation,
                 ticketTime: row.ticketTime,
                 status: row.status,
+                priceStandard: row.priceStandard,
+                route: row.description,
                 plaqueNumber: row.plaqueNumber,
-                maxSeats: row.maxSeats,
-                // price: row.price,
-                // distance: row.distance,
-                // duration: row.duration,
-                // },
-                // Include company details
-                // company: {
-                // companyName: row.companyName,
-                // },
+                maxCapacity: row.maxCapacity,
+                price: row.price,
             }));
 
             callback(null, boughtTickets);
@@ -284,12 +283,14 @@ class BoughtTicket {
         const query = `
             SELECT bt.*, us.firstName, us.lastName, us.telephone, us.nationalID, loc_origin.location_name AS originLocation,
             loc_dest.location_name AS destinationLocation,
-            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.plaqueNumber, tf.maxSeats, c.companyName
+            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
             
             FROM boughttickets bt
             INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
             INNER JOIN companies c ON tf.companyID = c.companyID
             INNER JOIN users us ON bt.customerID = us.id
+            JOIN buses b ON tf.busID = b.id
+            LEFT JOIN priceStandards pa ON tf.priceStandard = pa.id
             JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
             JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
             WHERE tf.companyID = ? AND bt.ticketDate = '${date}'
@@ -301,40 +302,29 @@ class BoughtTicket {
                 return callback(error, null);
             }
 
-            
+
             const boughtTickets = results.map(row => {
-                
+
                 // console.log(row)
                 return {
                     id: row.id,
                     customerID: row.customerID,
-                    // customer: {
                     customerNames: `${row.firstName} ${row.lastName}`,
                     customerTelephone: row.telephone,
                     customerNID: row.nationalID,
                     // },
                     // ticketFormatID: row.ticketFormatID,
                     ticketDate: row.ticketDate,
-                    // plaqueNumber: row.plaqueNumber,
                     paymentMethodUsed: row.paymentMethodUsed,
                     timeBought: row.timeBought,
                     location: `From ${row.originLocation} to ${row.destinationLocation}`,
-                    // Include ticketFormat details
-                    // ticketFormat: {
-                    // originLocation: row.originLocation,
-                    // destinationLocation: row.destinationLocation,
                     ticketTime: row.ticketTime,
                     status: row.status,
+                    priceStandard: row.priceStandard,
+                    route: row.description,
                     plaqueNumber: row.plaqueNumber,
-                    maxSeats: row.maxSeats,
-                    // price: row.price,
-                    // distance: row.distance,
-                    // duration: row.duration,
-                    // },
-                    // Include company details
-                    // company: {
-                    // companyName: row.companyName,
-                    // },
+                    maxCapacity: row.maxCapacity,
+                    price: row.price,
                 }
             });
 
@@ -346,7 +336,7 @@ class BoughtTicket {
         const query = `
             SELECT bt.*, us.firstName, us.lastName, us.telephone, us.nationalID, loc_origin.location_name AS originLocation,
             loc_dest.location_name AS destinationLocation,
-            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.plaqueNumber, tf.maxSeats, c.companyName,
+            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
             bus.plaqueNumber AS plaque
             
             FROM boughttickets bt
@@ -355,6 +345,7 @@ class BoughtTicket {
             INNER JOIN users us ON bt.customerID = us.id
             INNER JOIN ticketAssignments ta ON bt.id = ta.boughtTicketID
             INNER JOIN buses bus ON ta.busID = bus.id
+            LEFT JOIN priceStandards pa ON tf.priceStandard = pa.id
             JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
             JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
             WHERE tf.companyID = ? AND bt.ticketDate = '${date}'
@@ -366,40 +357,29 @@ class BoughtTicket {
                 return callback(error, null);
             }
 
-            
+
             const boughtTickets = results.map(row => {
-                
+
                 // console.log(row)
                 return {
                     id: row.id,
                     customerID: row.customerID,
-                    // customer: {
                     customerNames: `${row.firstName} ${row.lastName}`,
                     customerTelephone: row.telephone,
                     customerNID: row.nationalID,
                     // },
                     // ticketFormatID: row.ticketFormatID,
                     ticketDate: row.ticketDate,
-                    // plaqueNumber: row.plaqueNumber,
                     paymentMethodUsed: row.paymentMethodUsed,
                     timeBought: row.timeBought,
                     location: `From ${row.originLocation} to ${row.destinationLocation}`,
-                    // Include ticketFormat details
-                    // ticketFormat: {
-                    // originLocation: row.originLocation,
-                    // destinationLocation: row.destinationLocation,
                     ticketTime: row.ticketTime,
                     status: row.status,
-                    plaqueNumber: row.plaque,
-                    maxSeats: row.maxSeats,
-                    // price: row.price,
-                    // distance: row.distance,
-                    // duration: row.duration,
-                    // },
-                    // Include company details
-                    // company: {
-                    // companyName: row.companyName,
-                    // },
+                    priceStandard: row.priceStandard,
+                    route: row.description,
+                    plaqueNumber: row.plaqueNumber,
+                    maxCapacity: row.maxCapacity,
+                    price: row.price,
                 }
             });
 
@@ -488,9 +468,9 @@ class BoughtTicket {
 
     static getAllByDateAndCompanyID(date, companyID, callback) {
         const query = `
-        SELECT bt.* FROM boughttickets bt
-        JOIN ticketformats tf on bt.ticketFormatID = tf.id
-        WHERE Date(bt.timeBought) = "${date}" AND tf.companyID = ?
+            SELECT bt.* FROM boughttickets bt
+            JOIN ticketformats tf on bt.ticketFormatID = tf.id
+            WHERE Date(bt.timeBought) = "${date}" AND tf.companyID = ?
         `;
         pool.query(query, [companyID], (error, results) => {
             if (error) {
@@ -553,9 +533,6 @@ class BoughtTicket {
             callback(null, boughtTickets);
         });
     }
-
-
-
 
     static getAllByMonthAndCompanyID(month, companyID, callback) {
         // Extract the year and month from the provided month string (YYYY-MM)

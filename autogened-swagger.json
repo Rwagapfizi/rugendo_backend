@@ -231,7 +231,7 @@
                 "companyName": {
                   "example": "any"
                 },
-                "companyLocation": {
+                "workLocations": {
                   "example": "any"
                 }
               }
@@ -257,6 +257,36 @@
           "Companies"
         ],
         "description": "Endpoint to get all Companies",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/companies/locate/{from}/{to}": {
+      "get": {
+        "tags": [
+          "Companies"
+        ],
+        "description": "Endpoint to get all Companies by Locations",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "to",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -342,6 +372,63 @@
         }
       }
     },
+    "/location/{id}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to get a Location by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/prices/{fromLocationID}/{toLocationID}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to get prices standards of given Locations",
+        "parameters": [
+          {
+            "name": "fromLocationID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "toLocationID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/locations/add": {
       "post": {
         "tags": [
@@ -372,7 +459,7 @@
         }
       }
     },
-    "/locations/{id}": {
+    "/locations/delete/{id}": {
       "delete": {
         "tags": [
           "Locations"
@@ -438,10 +525,10 @@
                 "companyID": {
                   "example": "any"
                 },
-                "plaqueNumber": {
+                "busID": {
                   "example": "any"
                 },
-                "maxSeats": {
+                "priceStandard": {
                   "example": "any"
                 }
               }
@@ -590,16 +677,7 @@
                 "ticketTime": {
                   "example": "any"
                 },
-                "duration": {
-                  "example": "any"
-                },
-                "price": {
-                  "example": "any"
-                },
-                "plaqueNumber": {
-                  "example": "any"
-                },
-                "maxSeats": {
+                "busID": {
                   "example": "any"
                 },
                 "companyID": {
@@ -1373,7 +1451,7 @@
         }
       }
     },
-    "/buses/driverData/{id}": {
+    "/buses/driverData/{busID}": {
       "get": {
         "tags": [
           "Assign Bus"
@@ -1381,7 +1459,7 @@
         "description": "Endpoint to get Driver Data by BusID",
         "parameters": [
           {
-            "name": "id",
+            "name": "busID",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1390,9 +1468,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          },
-          "404": {
-            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -1420,6 +1495,132 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bus/{busID}/today/{companyID}": {
+      "get": {
+        "tags": [
+          "Buses"
+        ],
+        "description": "Endpoint to get Bought Tickets for today\\'s date by BusID",
+        "parameters": [
+          {
+            "name": "busID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bus/{busID}/week/{companyID}": {
+      "get": {
+        "tags": [
+          "Buses"
+        ],
+        "description": "Endpoint to get the total revenue for each of the last 7 days by a bus",
+        "parameters": [
+          {
+            "name": "busID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bus/{busID}/month/{companyID}": {
+      "get": {
+        "tags": [
+          "Buses"
+        ],
+        "description": "Endpoint to get Bought Tickets for the current month by BusID",
+        "parameters": [
+          {
+            "name": "busID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bus/{busID}/lastMonths/{companyID}": {
+      "get": {
+        "tags": [
+          "Buses"
+        ],
+        "description": "Endpoint to get the total revenue for each of the last 6 months using BusID",
+        "parameters": [
+          {
+            "name": "busID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           },
           "500": {
             "description": "Internal Server Error"

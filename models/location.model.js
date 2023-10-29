@@ -79,6 +79,53 @@ class Location {
         });
     }
 
+    static getByID(id, callback) {
+        const query = 'SELECT * FROM locations where location_id = ?';
+        pool.query(query, [id], (error, results) => {
+            if (error) {
+                console.error('Error fetching locations:', error);
+                return callback(error, null);
+            }
+            if (results.length === 0) {
+                return callback(null, null); // No delivery found
+            }
+
+            const row = results[0];
+
+            const location = new Location(
+                row.location_id,
+                row.location_name
+            );
+
+            callback(null, location);
+        });
+    }
+
+    static getPriceByLocations(fromLocationID, toLocationID, callback) {
+        const query = 'SELECT * FROM priceStandards where fromLocation = ? AND toLocation = ?';
+        pool.query(query, [fromLocationID, toLocationID], (error, results) => {
+            if (error) {
+                console.error('Error fetching locations:', error);
+                return callback(error, null);
+            }
+            if (results.length === 0) {
+                return callback(null, null); // No delivery found
+            }
+
+            // const row = results[0];
+
+            const priceInfo = results.map(row => ({
+                ID: row.ID,
+                fromLocation: row.fromLocation,
+                toLocation: row.toLocation,
+                price: row.price,
+                description: row.description,
+            }));
+
+            callback(null, priceInfo);
+        });
+    }
+
     static createLocation(locationName, callback) {
         const query = 'INSERT INTO locations (location_name) VALUES (?)';
         pool.query(query, [locationName], (error, result) => {

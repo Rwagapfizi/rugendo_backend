@@ -1,7 +1,7 @@
 const pool = require('../utils/mysql');
 
 class TicketFormat {
-    constructor(id, originLocation, destinationLocation, ticketTime, distance, duration, price, companyID, plaqueNumber, maxSeats) {
+    constructor(id, originLocation, destinationLocation, ticketTime, distance, duration, price, companyID, busID, priceStandard) {
         this.id = id;
         this.originLocation = originLocation;
         this.destinationLocation = destinationLocation;
@@ -10,12 +10,12 @@ class TicketFormat {
         this.duration = duration;
         this.price = price;
         this.companyID = companyID;
-        this.plaqueNumber = plaqueNumber;
-        this.maxSeats = maxSeats;
+        this.busID = busID;
+        this.priceStandard = priceStandard;
     }
 
     static getAll(callback) {
-        const query = 'SELECT * FROM ticketformats';
+        const query = `SELECT * FROM ticketformats`;
         pool.query(query, (error, results) => {
             if (error) {
                 console.error('Error fetching ticket formats:', error);
@@ -31,8 +31,8 @@ class TicketFormat {
                 row.duration,
                 row.price,
                 row.companyID,
-                row.plaqueNumber,
-                row.maxSeats,
+                row.busID,
+                row.priceStandard,
             ));
             callback(null, ticketFormats);
         });
@@ -41,22 +41,25 @@ class TicketFormat {
     static getAllDetailed(callback) {
         const query = `
         SELECT
-        tf.id,
-        loc_origin.location_name AS originLocation,
-        loc_dest.location_name AS destinationLocation,
-        tf.ticketTime,
-        tf.distance,
-        tf.duration,
-        tf.price,
-        tf.companyID,
-        tf.plaqueNumber,
-        tf.maxSeats,
-        c.companyName
-    FROM
-        ticketformats tf
-        JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
-        JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
-        LEFT JOIN companies c ON tf.companyID = c.companyID
+            tf.id,
+            loc_origin.location_name AS originLocation,
+            loc_dest.location_name AS destinationLocation,
+            tf.ticketTime,
+            tf.distance,
+            tf.duration,
+            tf.price,
+            tf.companyID,
+            tf.busID,
+            tf.priceStandard,
+            b.plaqueNumber,
+            b.maxCapacity,
+            c.companyName
+        FROM
+            ticketformats tf
+            JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
+            JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
+            JOIN buses b ON tf.busID = b.id
+            LEFT JOIN companies c ON tf.companyID = c.companyID
         `;
 
         pool.query(query, (error, results) => {
@@ -64,7 +67,7 @@ class TicketFormat {
                 console.error('Error fetching ticket formats:', error);
                 return callback(error, null);
             }
-            console.log(results)
+            // console.log(results)
             callback(null, results);
         });
     }
@@ -72,23 +75,28 @@ class TicketFormat {
     static getDetailedByID(ticketFormatID, callback) {
         const query = `
         SELECT
-        tf.id,
-        loc_origin.location_name AS originLocation,
-        loc_dest.location_name AS destinationLocation,
-        tf.ticketTime,
-        tf.distance,
-        tf.duration,
-        tf.price,
-        tf.companyID,
-        tf.plaqueNumber,
-        tf.maxSeats,
-        c.companyName
-    FROM
-        ticketformats tf
-        JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
-        JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
-        LEFT JOIN companies c ON tf.companyID = c.companyID
-        WHERE tf.id = ?
+            tf.id,
+            loc_origin.location_name AS originLocation,
+            loc_dest.location_name AS destinationLocation,
+            tf.ticketTime,
+            tf.distance,
+            tf.duration,
+            tf.price,
+            tf.companyID,
+            tf.busID,
+            tf.priceStandard,
+            pa.description as route,
+            b.plaqueNumber,
+            b.maxCapacity,
+            c.companyName
+        FROM
+            ticketformats tf
+            JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
+            JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
+            JOIN buses b ON tf.busID = b.id
+            LEFT JOIN priceStandards pa ON tf.priceStandard = pa.ID
+            LEFT JOIN companies c ON tf.companyID = c.companyID
+            WHERE tf.id = ?
         `;
 
         pool.query(query, [ticketFormatID], (error, results) => {
@@ -119,7 +127,15 @@ class TicketFormat {
     }
 
     static getById(ticketFormatID, callback) {
-        const query = 'SELECT * FROM ticketformats WHERE id = ?';
+        const query = `
+        SELECT tf.*,
+        pa.description,
+        b.plaqueNumber,
+        b.maxCapacity 
+        FROM ticketformats tf
+        JOIN buses b ON tf.busID = b.id
+        LEFT JOIN priceStandards pa ON tf.priceStandard = pa.ID
+        WHERE tf.id = ?`;
         pool.query(query, [ticketFormatID], (error, results) => {
             if (error) {
                 console.error('Error fetching ticket format by ID:', error);
@@ -131,30 +147,34 @@ class TicketFormat {
             }
 
             const ticketFormatData = results[0];
-            const ticketFormat = new TicketFormat(
-                ticketFormatData.id,
-                ticketFormatData.originLocation,
-                ticketFormatData.destinationLocation,
-                ticketFormatData.ticketTime,
-                ticketFormatData.distance,
-                ticketFormatData.duration,
-                ticketFormatData.price,
-                ticketFormatData.companyID,
-                ticketFormatData.plaqueNumber,
-                ticketFormatData.maxSeats,
-            );
+            const ticketFormat = {
+                id: ticketFormatData.id,
+                originLocation: ticketFormatData.originLocation,
+                destinationLocation: ticketFormatData.destinationLocation,
+                ticketTime: ticketFormatData.ticketTime,
+                distance: ticketFormatData.distance,
+                duration: ticketFormatData.duration,
+                price: ticketFormatData.price,
+                companyID: ticketFormatData.companyID,
+                busID: ticketFormatData.busID,
+                priceStandard: ticketFormatData.priceStandard,
+                route: ticketFormatData.description,
+                plaqueNumber: ticketFormatData.plaqueNumber,
+                maxCapacity: ticketFormatData.maxCapacity,
+            };
             callback(null, ticketFormat);
         });
     }
 
     static create(ticketFormatData, callback) {
         const query = 'INSERT INTO ticketformats SET ?';
+        // console.log("Ticket Model before Query: ", ticketFormatData)
         pool.query(query, ticketFormatData, (error, result) => {
             if (error) {
                 console.error('Error creating ticket format:', error);
                 return callback(error, null);
             }
-
+            
             const newTicketFormat = new TicketFormat(
                 result.insertId,
                 ticketFormatData.originLocation,
@@ -164,9 +184,13 @@ class TicketFormat {
                 ticketFormatData.duration,
                 ticketFormatData.price,
                 ticketFormatData.companyID,
-                ticketFormatData.plaqueNumber,
-                ticketFormatData.maxSeats,
+                // ticketFormatData.plaqueNumber,
+                ticketFormatData.busID,
+                ticketFormatData.priceStandard,
             );
+
+            // console.log("Ticket Model after query: ", newTicketFormat);
+            
             callback(null, newTicketFormat);
         });
     }
@@ -185,13 +209,20 @@ class TicketFormat {
         tf.duration,
         tf.price,
         tf.companyID,
-        tf.plaqueNumber,
-        tf.maxSeats
+        tf.busID,
+        tf.priceStandard,
+        pa.description,
+        b.plaqueNumber,
+        b.maxCapacity,
+        c.companyName
             FROM
         ticketformats tf
         JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
         JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
-        where companyID = ?
+        JOIN buses b ON tf.busID = b.id
+        LEFT JOIN priceStandards pa ON tf.priceStandard = pa.ID
+        LEFT JOIN companies c ON tf.companyID = c.companyID
+        where tf.companyID = ?
         `;
         pool.query(query, [companyID], (error, results) => {
             if (error) {
@@ -219,8 +250,11 @@ class TicketFormat {
                 duration: row.duration,
                 price: row.price,
                 companyID: row.companyID,
+                busID: row.busID,
+                priceStandard: row.priceStandard,
+                route: row.description,
                 plaqueNumber: row.plaqueNumber,
-                maxSeats: row.maxSeats,
+                maxCapacity: row.maxCapacity,
             }));
 
             callback(null, ticketFormats);
@@ -231,15 +265,12 @@ class TicketFormat {
         const query = `
             UPDATE ticketformats
             SET ticketTime = ?,
-                duration = ?,
-                price = ?,
-                plaqueNumber = ?,
-                maxSeats = ?
+                busID = ?
             WHERE id = ?
         `;
 
-        const { ticketTime, duration, price, plaqueNumber, maxSeats } = updatedTicketFormat;
-        const values = [ticketTime, duration, price, plaqueNumber, maxSeats, id];
+        const { ticketTime, busID } = updatedTicketFormat;
+        const values = [ticketTime, busID, id];
 
         pool.query(query, values, (error, result) => {
             if (error) {

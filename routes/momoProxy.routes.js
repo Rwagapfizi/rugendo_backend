@@ -151,7 +151,7 @@ router.post('/send-to-email', async (req, res) => {
                 console.error('Error:', error);
                 res.status(500).json({ error: 'Failed to send the email.' });
             } else {
-                console.log('Email sent:', info.response);
+                // console.log('Email sent:', info.response);
                 res.status(200).json({ message: 'Email sent successfully.' });
             }
         });

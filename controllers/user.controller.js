@@ -177,6 +177,12 @@ const login = (req, res) => {
                     console.error('Error generating JWT:', jwtError);
                     return res.status(500).json({ error: 'Login failed' });
                 }
+
+                res.clearCookie('authToken');
+                res.clearCookie('userID');
+                res.clearCookie('userRole');
+                res.clearCookie('userCompanyID');
+
                 res.cookie('authToken', token, { httpOnly: true }); // Set the JWT token as a cookie
                 res.cookie('userID', user.id, { httpOnly: true, secure: true }); // Set the user ID cookie
                 res.cookie('userRole', user.role, { httpOnly: true, secure: true }); // Set the user role cookie
@@ -210,7 +216,7 @@ const getUserDetails = (req, res) => {
     // Retrieve the token from the cookie
     const authToken = req.cookies.authToken || req.headers.authorization?.split(' ')[1];
     // console.log(authToken)
-    
+
     // Verify and decode the token
     jwt.verify(authToken, jwtSecretKey, (verifyError, decoded) => {
         // console.log(decoded)
@@ -227,6 +233,7 @@ const getUserDetails = (req, res) => {
                     console.error('Failed to fetch user details:', error);
                     res.status(500).json({ error: 'Failed to fetch user details' });
                 } else {
+                    // console.log(user)
                     if (user.role === 'CUSTOMER') {
                         // If the user is a CUSTOMER, only show basic user details
                         const userDetails = {
@@ -238,6 +245,7 @@ const getUserDetails = (req, res) => {
                             nationalID: user.nationalID,
                             role: user.role,
                         };
+
                         res.status(200).json(userDetails);
                     } else if (user.role === 'WORKER') {
                         // If the user is a WORKER, fetch company details using user.companyID
@@ -252,11 +260,14 @@ const getUserDetails = (req, res) => {
                                     firstName: user.firstName,
                                     lastName: user.lastName,
                                     email: user.email,
+                                    telephone: user.telephone,
+                                    nationalID: user.nationalID,
                                     role: user.role,
                                     company: {
                                         companyID: company.companyID,
                                         companyName: company.companyName,
                                         companyLocation: company.companyLocation,
+                                        workLocations: company.workLocations,
                                     },
                                 };
                                 res.status(200).json(userDetails);

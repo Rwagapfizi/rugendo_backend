@@ -8,11 +8,11 @@ function generateRandom3DigitNumber() {
     return Math.floor(Math.random() * 900) + 100; // Generates a random number between 100 and 999
 }
 
-const createCompany = async(req, res) => {
+const createCompany = async (req, res) => {
     // #swagger.tags = ['Companies']
     // #swagger.description = 'Endpoint to create a Company'
 
-    const { companyName, companyLocation } = req.body;
+    const { companyName, workLocations } = req.body;
     let generatedCompanyID;
     let isUnique = false;
 
@@ -25,7 +25,8 @@ const createCompany = async(req, res) => {
     const newCompany = {
         companyID: generatedCompanyID,
         companyName,
-        companyLocation
+        companyLocation: 'Kigali',
+        workLocations
     };
 
     // Insert the new company into the database
@@ -46,7 +47,6 @@ const createCompany = async(req, res) => {
 const getAllCompanies = (req, res) => {
     // #swagger.tags = ['Companies']
     // #swagger.description = 'Endpoint to get all Companies'
-
     Company.getAll((error, companies) => {
         if (error) {
             console.error('Failed to fetch companies:', error);
@@ -56,6 +56,25 @@ const getAllCompanies = (req, res) => {
         }
     });
 };
+
+const getCompaniesFromLocations = (req, res) => {
+    // #swagger.tags = ['Companies']
+    // #swagger.description = 'Endpoint to get all Companies by Locations'
+    // const {fromLocationID, toLocationID} = req.params;
+    const fromLocationID = req.params.from;
+    const toLocationID = req.params.to;
+
+    // Call a model function to fetch filtered companies based on 'fromLocationID' and 'toLocationID'
+    Company.getCompaniesByLocations(fromLocationID, toLocationID, (error, companies) => {
+        if (error) {
+            console.error('Failed to fetch filtered companies:', error);
+            res.status(500).json({ error: 'Failed to fetch filtered companies' });
+        } else {
+            res.status(200).json(companies);
+        }
+    });
+};
+
 
 const getCompanyByID = (req, res) => {
     // #swagger.tags = ['Companies']
@@ -95,6 +114,7 @@ const deleteCompanyByCompanyID = (req, res) => {
 module.exports = {
     createCompany,
     getAllCompanies,
+    getCompaniesFromLocations,
     getCompanyByID,
     deleteCompanyByCompanyID
 };

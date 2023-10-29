@@ -1,7 +1,7 @@
 require('dotenv').config()
 const User = require('../models/user.model')
 const Company = require('../models/company.model')
-const TicketFormat = require('../models/ticketFormat.model')
+const TicketFormat = require('../models/ticketFormat.model');
 const BoughtTicket = require('../models/boughtTicket.model');
 const express = require('express');
 const moment = require('moment');
@@ -165,8 +165,10 @@ const getBoughtTicketsForToday = (req, res) => {
                         price: format.price,
                         distance: format.distance,
                         duration: format.duration,
+                        priceStandard: format.priceStandard,
+                        route: format.route,
                         plaqueNumber: format.plaqueNumber,
-                        maxSeats: format.maxSeats,
+                        maxCapacity: format.maxCapacity,
                     },
                 };
 
@@ -237,8 +239,10 @@ const getBoughtTicketsForTodayByCompanyID = (req, res) => {
                         price: format.price,
                         distance: format.distance,
                         duration: format.duration,
+                        priceStandard: format.priceStandard,
+                        route: format.route,
                         plaqueNumber: format.plaqueNumber,
-                        maxSeats: format.maxSeats,
+                        maxCapacity: format.maxCapacity,
                     },
                 };
 
@@ -562,15 +566,6 @@ const getBoughtTicketsByDate = (req, res) => {
         }
 
         const fetchTicketFormatDetails = (ticket) => {
-            // TicketFormat.getById(ticket.ticketFormatID, (formatError, format) => {
-            //     if (formatError) {
-            //         console.error('Error fetching ticket format details:', formatError);
-            //         return res.status(500).json({ error: 'Failed to fetch ticket format details' });
-            //     }
-
-            //     if (!format) {
-            //         return res.status(404).json({ error: 'Ticket format not found' });
-            //     }
 
             const ticketWithFormat = {
                 id: ticket.id,
@@ -592,22 +587,9 @@ const getBoughtTicketsByDate = (req, res) => {
             // });
         };
 
-        // const boughtTicketsResult = {
-        //     id: boughtTickets.id,
-        //     customerID: boughtTickets.customerID,
-        //     ticketFormatID: boughtTickets.ticketFormatID,
-        //     ticketDate: boughtTickets.ticketDate,
-        //     plaqueNumber: boughtTickets.plaqueNumber,
-        //     paymentMethodUsed: boughtTickets.paymentMethodUsed,
-        //     timeBought: boughtTickets.timeBought,
-        //     // seatsLeft: 30
-        // }
-        // Return the fetched bought tickets in the response
         boughtTickets.forEach((ticket) => {
             fetchTicketFormatDetails(ticket);
         });
-        // res.status(200).json(boughtTickets);
-        // res.status(200).json(boughtTicketsResult);
     });
 };
 
@@ -759,8 +741,10 @@ const generateReceipts = (req, res) => {
                                 price,
                                 distance,
                                 duration,
+                                priceStandard,
+                                route,
                                 plaqueNumber,
-                                maxSeats,
+                                maxCapacity,
                             },
                             company: { companyName },
                         } = ticket;
@@ -777,8 +761,10 @@ const generateReceipts = (req, res) => {
                             price,
                             distance,
                             duration,
+                            priceStandard,
+                            route,
                             plaqueNumber,
-                            maxSeats,
+                            maxCapacity,
                             status
                         };
 
@@ -795,27 +781,19 @@ const generateReceipts = (req, res) => {
 const generateSingleReceipt = (req, res) => {
     // #swagger.tags = ['Bought Ticket']
     // #swagger.description = 'Endpoint to generate a receipt for a specific ticket bought by the logged-in user'
-
-    // Get the ID of the logged-in user from the cookie
-    // Check if the user is logged in
     const authToken = req.cookies.authToken || req.headers.authorization?.split(' ')[1];
     if (!authToken) {
         return res.status(401).json({ error: 'Unauthorized, you have to be logged in to generate a receipt.' });
     }
 
-    // Get the ID of the specific ticket you want to generate a receipt for
-    const ticketID = req.params.id; // Assuming you pass the ticket ID as a route parameter
+    const ticketID = req.params.id;
 
     jwt.verify(authToken, jwtSecretKey, (verifyError, decoded) => {
-        // console.log(decoded)
         if (verifyError) {
-            // Handle verification error
             res.status(401).json({ error: 'Unauthorized', verifyError: verifyError });
         } else {
-            // Token is valid, proceed with fetching user details
             const userID = decoded.id;
-            // console.log("UserID: ", userID);
-            const loggedInUserID = userID; // Assuming the user ID is stored in the userID cookie
+            const loggedInUserID = userID;
 
             // Fetch the logged-in user's details using User.getByID
             User.getUserById(loggedInUserID, (userError, user) => {
@@ -854,8 +832,10 @@ const generateSingleReceipt = (req, res) => {
                             price,
                             distance,
                             duration,
+                            priceStandard,
+                            route,
                             plaqueNumber,
-                            maxSeats,
+                            maxCapacity,
                         },
                         company: { companyName },
                     } = ticket;
@@ -872,12 +852,13 @@ const generateSingleReceipt = (req, res) => {
                         price,
                         distance,
                         duration,
+                        priceStandard,
+                        route,
                         plaqueNumber,
-                        maxSeats,
+                        maxCapacity,
                         status
                     };
 
-                    // You can send the receipt as a response
                     res.status(200).json(receipt);
                 });
             });

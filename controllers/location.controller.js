@@ -61,6 +61,48 @@ const getAllLocations = (req, res) => {
     });
 };
 
+const getLocationByID = (req, res) => {
+    // #swagger.tags = ['Locations']
+    // #swagger.description = 'Endpoint to get a Location by ID'
+    const locationID = req.params.id;
+    Location.getByID(locationID, (error, location) => {
+        if (error) {
+            console.error('Error fetching location by ID:', error);
+            return res.status(500).json({ error: 'Failed to fetch location' });
+        } else if (!location) {
+            return res.status(404).json({ error: 'Location not found' });
+        } else {
+            return res.status(200).json(location);
+        }
+    });
+};
+
+const getPricesFromLocations = (req, res) => {
+    // #swagger.tags = ['Locations']
+    // #swagger.description = 'Endpoint to get prices standards of given Locations'
+    const fromLocationID = req.params.fromLocationID;
+    const toLocationID = req.params.toLocationID;
+    Location.getPriceByLocations(fromLocationID, toLocationID, (error, priceInfo) => {
+        if (error) {
+            console.error('Failed to fetch price info:', error);
+            return res.status(500).json({ error: 'Failed to fetch price info' });
+        } else {
+            if (priceInfo == null) {
+                Location.getPriceByLocations(toLocationID, fromLocationID, (error, priceInfo) => {
+                    if (error) {
+                        console.error('Failed to fetch price info:', error);
+                        return res.status(500).json({ error: 'Failed to fetch price info' });
+                    } else {
+                        return res.status(200).json(priceInfo);
+                    }
+                })
+            } else {
+                return res.status(200).json(priceInfo);
+            }
+        }
+    });
+};
+
 const createLocation = (req, res) => {
     // #swagger.tags = ['Locations']
     // #swagger.description = 'Endpoint to create a location'
@@ -72,7 +114,7 @@ const createLocation = (req, res) => {
             return res.status(500).json({ error: 'Failed to create location' });
         }
 
-        res.status(201).json({ message: 'Location created successfully', locationID });
+        return res.status(201).json({ message: 'Location created successfully', locationID });
     });
 };
 
@@ -106,6 +148,8 @@ const deleteLocationByID = (req, res) => {
 
 module.exports = {
     getAllLocations,
+    getLocationByID,
+    getPricesFromLocations,
     createLocation,
     deleteLocationByID
 };

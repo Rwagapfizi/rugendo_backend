@@ -83,6 +83,8 @@ class User {
                 userData.role,
                 userData.companyID
             );
+
+            // console.log(user)
             callback(null, user);
         });
     }

@@ -1,4 +1,5 @@
 const pool = require('../utils/mysql');
+const moment = require('moment');
 
 class Bus {
     constructor(id, plaqueNumber, maxCapacity, model, password, companyID) {
@@ -72,6 +73,78 @@ class Bus {
             ));
 
             callback(null, buses);
+        });
+    }
+
+    static getAllByDateAndBusID(date, busID, companyID, callback) {
+        const query = `
+            SELECT bt.* FROM boughttickets bt
+            JOIN ticketformats tf on bt.ticketFormatID = tf.id
+            JOIN buses b ON tf.busID = b.id
+            WHERE Date(bt.timeBought) = "${date}" AND tf.busID = ? AND tf.companyID = ?
+        `;
+        pool.query(query, [busID, companyID], (error, results) => {
+            if (error) {
+                console.error('Error fetching bought tickets for date:', error);
+                return callback(error, null);
+            }
+
+            // console.log(results)
+
+            // if (results.length === 0) {
+            //     return callback(null, null);
+            // }
+
+            const boughtTickets = results.map(row => ({
+                id: row.id,
+                customerID: row.customerID,
+                ticketFormatID: row.ticketFormatID,
+                ticketDate: row.ticketDate,
+                plaqueNumber: row.plaqueNumber,
+                paymentMethodUsed: row.paymentMethodUsed,
+                timeBought: row.timeBought,
+                status: row.status
+            }));
+            callback(null, boughtTickets);
+        });
+    }
+
+    static getAllByMonthAndBusID(month, busID, companyID, callback) {
+        // Extract the year and month from the provided month string (YYYY-MM)
+        const year = month.split('-')[0];
+        const monthNumber = month.split('-')[1];
+
+        // Create a date range for the current month
+        const startDate = `${year}-${monthNumber}-01`;
+        const endDate = moment(startDate).endOf('month').format('YYYY-MM-DD');
+
+        const query = `
+            SELECT bt.* FROM boughttickets bt
+            JOIN ticketformats tf ON bt.ticketFormatID = tf.id
+            JOIN buses b ON tf.busID = b.id
+            WHERE DATE(bt.timeBought) >= ? AND DATE(bt.timeBought) <= ? AND b.id = ? AND tf.companyID = ?
+        `;
+
+        pool.query(query, [startDate, endDate, busID, companyID], (error, results) => {
+            if (error) {
+                console.error('Error fetching bought tickets for the current month:', error);
+                return callback(error, null);
+            }
+
+            // console.log(results)
+
+            const boughtTickets = results.map(row => ({
+                id: row.id,
+                customerID: row.customerID,
+                ticketFormatID: row.ticketFormatID,
+                ticketDate: row.ticketDate,
+                plaqueNumber: row.plaqueNumber,
+                paymentMethodUsed: row.paymentMethodUsed,
+                timeBought: row.timeBought,
+                status: row.status
+            }));
+
+            callback(null, boughtTickets);
         });
     }
 
@@ -163,15 +236,25 @@ class Bus {
         });
     }
 
-    static getDriverData(busID, callback) {
+    static getDriverInfo(date, busID, callback) {
+        // const query = `
+        //     SELECT b.plaqueNumber, GROUP_CONCAT(ta.boughtTicketID) AS assignedTickets
+        //     FROM buses b
+        //     LEFT JOIN ticketAssignments ta ON b.id = ta.busID
+        //     JOIN boughtTickets bt on ta.boughtTicketID = bt.id
+        //     WHERE b.id = ? AND Date(bt.ticketDate) = "${date}"
+        //     GROUP BY b.id
+        // `;
         const query = `
-            SELECT b.plaqueNumber, GROUP_CONCAT(ta.boughtTicketID) AS assignedTickets
+            SELECT b.plaqueNumber, ta.boughtTicketID, u.firstName, u.lastName AS assignedTickets
             FROM buses b
             LEFT JOIN ticketAssignments ta ON b.id = ta.busID
-            WHERE b.id = ?
-            GROUP BY b.id
+            JOIN boughtTickets bt on ta.boughtTicketID = bt.id
+            JOIN users u ON bt.customerID = u.id
+            WHERE b.id = ? AND Date(bt.ticketDate) = "${date}"
         `;
 
+        // console.log(query)
         pool.query(query, [busID], (error, results) => {
             if (error) {
                 console.error('Error fetching driver data for bus:', error);
@@ -182,15 +265,46 @@ class Bus {
                 return callback(null, null); // No matching bus found
             }
 
-            const driverData = results[0];
-            const driverBusData = {
-                plaqueNumber: driverData.plaqueNumber,
-                assignedTickets: driverData.assignedTickets ? driverData.assignedTickets.split(',').map(Number) : [],
-            };
+            // const driverData = results[0];
+            // const driverBusData = {
+            //     plaqueNumber: driverData.plaqueNumber,
+            //     assignedTickets: driverData.assignedTickets ? driverData.assignedTickets.split(',').map(Number) : [],
+            // };
 
-            callback(null, driverBusData);
+            // console.log(results)
+
+            callback(null, results);
         });
     }
+
+    // static getDriverData(busID, callback) {
+    //     const query = `
+    //         SELECT b.plaqueNumber, bt.*
+    //         FROM buses b
+    //         LEFT JOIN ticketAssignments ta ON b.id = ta.busID
+    //         INNER JOIN boughtTickets bt ON ta.boughtTicketID = bt.id
+    //         WHERE b.id = 4
+    //     `;
+
+    //     pool.query(query, [busID], (error, results) => {
+    //         if (error) {
+    //             console.error('Error fetching driver data for bus:', error);
+    //             return callback(error, null);
+    //         }
+
+    //         if (results.length === 0) {
+    //             return callback(null, null); // No matching bus found
+    //         }
+
+    //         const driverData = results[0];
+    //         const driverBusData = {
+    //             plaqueNumber: driverData.plaqueNumber,
+    //             assignedTickets: driverData.assignedTickets ? driverData.assignedTickets.split(',').map(Number) : [],
+    //         };
+
+    //         callback(null, driverBusData);
+    //     });
+    // }
 
     static assignToBus(assignmentData, callback) {
         const query = 'INSERT INTO ticketAssignments SET ?';

@@ -1,10 +1,11 @@
 const pool = require('../utils/mysql');
 
 class Company {
-    constructor(companyID, companyName, companyLocation) {
+    constructor(companyID, companyName, companyLocation, workLocations) {
         this.companyID = companyID;
         this.companyName = companyName;
         this.companyLocation = companyLocation;
+        this.workLocations = workLocations;
     }
 
     static getAll(callback) {
@@ -16,6 +17,7 @@ class Company {
                 row.companyID,
                 row.companyName,
                 row.companyLocation,
+                row.workLocations,
             ));
             callback(null, companies);
         });
@@ -37,9 +39,42 @@ class Company {
             const company = new Company(
                 companyData.companyID,
                 companyData.companyName,
-                companyData.companyLocation
+                companyData.companyLocation,
+                companyData.workLocations,
             );
             callback(null, company);
+        });
+    }
+
+    static getCompaniesByLocations(fromLocationID, toLocationID, callback) {
+        const query = `
+            SELECT c.*
+            FROM companies c
+            WHERE EXISTS (
+                SELECT 1
+                FROM ticketFormats tf
+                WHERE tf.companyID = c.companyID
+                AND tf.originLocation = ? 
+                AND tf.destinationLocation = ?
+            )
+        `;
+
+        pool.query(query, [fromLocationID, toLocationID], (error, results) => {
+            if (error) {
+                return callback(error);
+            }
+            // if (results.length === 0) {
+            //     return callback(null, null); // No delivery found
+            // }
+
+            const companies = results.map(row => new Company(
+                row.companyID,
+                row.companyName,
+                row.companyLocation,
+                row.workLocations
+            ));
+
+            callback(null, companies);
         });
     }
 
@@ -64,10 +99,12 @@ class Company {
                 const error = new Error('Invalid company data');
                 return callback(error, null);
             }
+            // console.log(result);
             const newCompany = new Company(
-                result.insertId,
+                companyData.companyID,
                 companyData.companyName,
                 companyData.companyLocation,
+                companyData.workLocations,
             );
 
             // Modify the result object to include the newly inserted companyID
@@ -76,7 +113,7 @@ class Company {
         });
     }
 
-    
+
 
     static deleteByCompanyID(companyID, callback) {
         const query = 'DELETE FROM companies WHERE companyID = ?';
@@ -95,7 +132,7 @@ class Company {
     }
 
     static validateCompany(company) {
-        if (!company.companyName || !company.companyLocation) {
+        if (!company.companyName || !company.companyLocation || !company.workLocations) {
             return false;
         }
         // Implement further validation as needed

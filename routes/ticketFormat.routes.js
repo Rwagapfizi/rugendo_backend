@@ -15,6 +15,9 @@ router.get('/ticket-formats/:id', TicketFormatController.getTicketFormatByID);
 // Express route
 router.get('/ticket-formats/by-company/:companyID', TicketFormatController.getTicketFormatsByCompany);
 
+// Express route
+router.get('/ticket-formats/locate/:companyID/:origin/:destination', TicketFormatController.getTicketFormatsByLocationsAndCompany);
+
 // Get all ticket formats with details
 router.get('/ticket-formats/detailed/all', TicketFormatController.getDetailedTicketFormats);
 

@@ -4,12 +4,14 @@ const outputFile = './autogened-swagger.json'
 const endpointsFiles = [
     './routes/user.routes.js', 
     './routes/company.routes.js', 
-    './routes/location.routes.js', 
     './routes/ticketFormat.routes.js', 
     './routes/boughtTicket.routes.js', 
     './routes/bus.routes.js',
-    // './routes/delivery.routes.js', 
+    './routes/bookedBus.routes.js',
+    './routes/location.routes.js', 
+    './routes/school.routes.js', 
     './routes/momoProxy.routes.js',
+    // './routes/delivery.routes.js', 
 ]
 const doc = {
     info: {

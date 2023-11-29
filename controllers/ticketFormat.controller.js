@@ -4,7 +4,7 @@ const Company = require('../models/company.model')
 const createTicketFormat = (req, res) => {
     // #swagger.tags = ['Ticket Format']
     // #swagger.description = 'Endpoint to create a Ticket Format'
-    const { originLocationID, destinationLocationID, ticketTime, distance, duration, price, companyID, busID, priceStandard } = req.body;
+    const { originLocationID, destinationLocationID, ticketTime, distance, duration, price, companyID, busID, priceStandard, status } = req.body;
 
     // Check if the company with the given companyID exists
     Company.getById(companyID, (companyError, existingCompany) => {
@@ -26,7 +26,8 @@ const createTicketFormat = (req, res) => {
             price,
             companyID,
             busID,
-            priceStandard
+            priceStandard,
+            status
         };
 
         // console.log("Ticket Controller: ", newTicketFormat)
@@ -127,6 +128,57 @@ const getTicketFormatsByCompany = (req, res) => {
                     busID: ticket.busID,
                     route: ticket.route,
                     priceStandard: ticket.priceStandard,
+                    status: ticket.status,
+                    plaqueNumber: ticket.plaqueNumber,
+                    maxCapacity: ticket.maxCapacity,
+                    // seatsLeft: 30,
+                };
+
+                ticketsWithSeats.push(ticketWithFormat);
+
+                // Check if all tickets have been processed
+                if (ticketsWithSeats.length === ticketFormats.length) {
+                    res.status(200).json(ticketsWithSeats);
+                }
+                // });
+            };
+
+            ticketFormats.forEach((ticket) => {
+                fetchTicketFormatDetails(ticket);
+            });
+        }
+    });
+};
+
+const getTicketFormatsByLocationsAndCompany = (req, res) => {
+    // #swagger.tags = ['Ticket Format']
+    // #swagger.description = 'Endpoint to get all Ticket Formats owned by given Company ID based on given locations'
+    const companyID = req.params.companyID;
+    const origin = req.params.origin;
+    const destination = req.params.destination;
+    const ticketsWithSeats = []
+    TicketFormat.getAllByLocationsAndCompanyID(origin, destination, companyID, (error, ticketFormats) => {
+        if (error) {
+            console.error('Failed to fetch ticket formats:', error);
+            res.status(500).json({ error: 'Failed to fetch ticket formats' });
+        } else {
+            const fetchTicketFormatDetails = (ticket) => {
+
+                const ticketWithFormat = {
+                    id: ticket.id,
+                    originLocationID: ticket.originLocationID,
+                    originLocation: ticket.originLocation,
+                    destinationLocationID: ticket.destinationLocationID,
+                    destinationLocation: ticket.destinationLocation,
+                    ticketTime:ticket.ticketTime,
+                    distance: ticket.distance,
+                    duration: ticket.duration,
+                    price: ticket.price,
+                    companyID: ticket.companyID,
+                    busID: ticket.busID,
+                    route: ticket.route,
+                    priceStandard: ticket.priceStandard,
+                    status: ticket.status,
                     plaqueNumber: ticket.plaqueNumber,
                     maxCapacity: ticket.maxCapacity,
                     // seatsLeft: 30,
@@ -152,7 +204,7 @@ const updateTicketFormatByID = (req, res) => {
     // #swagger.tags = ['Ticket Format']
     // #swagger.description = 'Endpoint to update a Ticket Format by its ID'
     const ticketFormatID = req.params.id;
-    const { ticketTime, busID, companyID } = req.body;
+    const { ticketTime, busID, status, companyID } = req.body;
 
     // Check if the company with the given companyID exists
     Company.getById(companyID, (companyError, existingCompany) => {
@@ -167,7 +219,8 @@ const updateTicketFormatByID = (req, res) => {
 
         const updatedTicketFormat = {
             ticketTime,
-            busID
+            busID,
+            status
         };
 
         TicketFormat.updateByID(ticketFormatID, updatedTicketFormat, (updateError, updatedTicketFormat) => {
@@ -213,9 +266,10 @@ module.exports = {
     createTicketFormat,
     getAllTicketFormats,
     getTicketFormatByID,
-    deleteTicketFormatByID,
+    getTicketFormatsByCompany,
+    getTicketFormatsByLocationsAndCompany,
     getDetailedTicketFormats,
     getDetailedTicketFormatByID,
-    getTicketFormatsByCompany,
-    updateTicketFormatByID
+    updateTicketFormatByID,
+    deleteTicketFormatByID,
 };

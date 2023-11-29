@@ -12,7 +12,7 @@ const createCompany = async (req, res) => {
     // #swagger.tags = ['Companies']
     // #swagger.description = 'Endpoint to create a Company'
 
-    const { companyName, workLocations } = req.body;
+    const { companyName, workLocations, companyLogo, bookingPrice, companyTelephone } = req.body;
     let generatedCompanyID;
     let isUnique = false;
 
@@ -25,8 +25,10 @@ const createCompany = async (req, res) => {
     const newCompany = {
         companyID: generatedCompanyID,
         companyName,
-        companyLocation: 'Kigali',
-        workLocations
+        workLocations,
+        companyLogo,
+        bookingPrice,
+        companyTelephone
     };
 
     // Insert the new company into the database
@@ -66,6 +68,39 @@ const getCompaniesFromLocations = (req, res) => {
 
     // Call a model function to fetch filtered companies based on 'fromLocationID' and 'toLocationID'
     Company.getCompaniesByLocations(fromLocationID, toLocationID, (error, companies) => {
+        if (error) {
+            console.error('Failed to fetch filtered companies:', error);
+            res.status(500).json({ error: 'Failed to fetch filtered companies' });
+        } else {
+            res.status(200).json(companies);
+        }
+    });
+};
+
+const getSchoolCompaniesFromLocations = (req, res) => {
+    // #swagger.tags = ['Companies']
+    // #swagger.description = 'Endpoint to get all Companies by Locations and have ticket formats for school season'
+    // const {fromLocationID, toLocationID} = req.params;
+    const fromLocationID = req.params.from;
+    const toLocationID = req.params.to;
+
+    // Call a model function to fetch filtered companies based on 'fromLocationID' and 'toLocationID'
+    Company.getSchoolCompaniesByLocations(fromLocationID, toLocationID, (error, companies) => {
+        if (error) {
+            console.error('Failed to fetch filtered companies:', error);
+            res.status(500).json({ error: 'Failed to fetch filtered companies' });
+        } else {
+            res.status(200).json(companies);
+        }
+    });
+};
+
+const getCompaniesFromPrivateBuses = (req, res) => {
+    // #swagger.tags = ['Companies']
+    // #swagger.description = 'Endpoint to get all Companies with Private Buses'
+
+    // Call a model function to fetch filtered companies based on 'fromLocationID' and 'toLocationID'
+    Company.getCompaniesByPrivateBuses((error, companies) => {
         if (error) {
             console.error('Failed to fetch filtered companies:', error);
             res.status(500).json({ error: 'Failed to fetch filtered companies' });
@@ -115,6 +150,8 @@ module.exports = {
     createCompany,
     getAllCompanies,
     getCompaniesFromLocations,
+    getSchoolCompaniesFromLocations,
+    getCompaniesFromPrivateBuses,
     getCompanyByID,
     deleteCompanyByCompanyID
 };

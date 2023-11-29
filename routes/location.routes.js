@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const stationController = require('../controllers/location.controller');
+const locationController = require('../controllers/location.controller');
 
 // // Get all stations
 // router.get('/stations', stationController.getAllStations);
@@ -12,18 +12,33 @@ const stationController = require('../controllers/location.controller');
 // router.delete('/stations/:id', stationController.deleteStationByID);
 
 // Get all locations
-router.get('/locations', stationController.getAllLocations);
+router.get('/locations', locationController.getAllLocations);
 
 // Get location by ID
-router.get('/location/:id', stationController.getLocationByID);
+router.get('/location/:id', locationController.getLocationByID);
 
 // Get prices standards from Locations
-router.get('/prices/:fromLocationID/:toLocationID', stationController.getPricesFromLocations);
+router.get('/prices/:fromLocationID/:toLocationID', locationController.getPricesFromLocations);
 
 // Create a new location
-router.post('/locations/add', stationController.createLocation);
+router.post('/locations/add', locationController.createLocation);
 
 // Delete a location by ID
-router.delete('/locations/delete/:id', stationController.deleteLocationByID);
+router.delete('/locations/delete/:id', locationController.deleteLocationByID);
+
+// Get all routes stops
+router.get('/routesStops', locationController.getAllRoutesStops);
+
+// Get routes stop by ID
+router.get('/routesStop/:id', locationController.getRoutesStopByID);
+
+// Get prices standards from Locations
+router.get('/routesStop/locate/:fromLocationID/:toLocationID', locationController.getRoutesStopByLocationsID);
+
+// Create a new routes stop 
+router.post('/routesStops/add', locationController.createRoutesStop);
+
+// Delete a routes stop by ID
+router.delete('/routesStops/delete/:id', locationController.deleteRoutesStopByID);
 
 module.exports = router;

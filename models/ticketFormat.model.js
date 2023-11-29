@@ -1,7 +1,7 @@
 const pool = require('../utils/mysql');
 
 class TicketFormat {
-    constructor(id, originLocation, destinationLocation, ticketTime, distance, duration, price, companyID, busID, priceStandard) {
+    constructor(id, originLocation, destinationLocation, ticketTime, distance, duration, price, companyID, busID, priceStandard, status) {
         this.id = id;
         this.originLocation = originLocation;
         this.destinationLocation = destinationLocation;
@@ -12,6 +12,7 @@ class TicketFormat {
         this.companyID = companyID;
         this.busID = busID;
         this.priceStandard = priceStandard;
+        this.status = status;
     }
 
     static getAll(callback) {
@@ -33,6 +34,7 @@ class TicketFormat {
                 row.companyID,
                 row.busID,
                 row.priceStandard,
+                row.status,
             ));
             callback(null, ticketFormats);
         });
@@ -51,6 +53,7 @@ class TicketFormat {
             tf.companyID,
             tf.busID,
             tf.priceStandard,
+            tf.status,
             b.plaqueNumber,
             b.maxCapacity,
             c.companyName
@@ -85,6 +88,7 @@ class TicketFormat {
             tf.companyID,
             tf.busID,
             tf.priceStandard,
+            tf.status,
             pa.description as route,
             b.plaqueNumber,
             b.maxCapacity,
@@ -110,16 +114,6 @@ class TicketFormat {
             }
 
             const ticketFormat = results[0];
-            // const ticketFormat = new TicketFormat(
-            //     ticketFormatData.id,
-            //     ticketFormatData.originLocation,
-            //     ticketFormatData.destinationLocation,
-            //     ticketFormatData.ticketTime,
-            //     ticketFormatData.distance,
-            //     ticketFormatData.duration,
-            //     ticketFormatData.price,
-            //     ticketFormatData.companyName
-            // );
             callback(null, ticketFormat);
 
             // callback(null, results);
@@ -158,6 +152,7 @@ class TicketFormat {
                 companyID: ticketFormatData.companyID,
                 busID: ticketFormatData.busID,
                 priceStandard: ticketFormatData.priceStandard,
+                status: ticketFormatData.status,
                 route: ticketFormatData.description,
                 plaqueNumber: ticketFormatData.plaqueNumber,
                 maxCapacity: ticketFormatData.maxCapacity,
@@ -187,6 +182,7 @@ class TicketFormat {
                 // ticketFormatData.plaqueNumber,
                 ticketFormatData.busID,
                 ticketFormatData.priceStandard,
+                ticketFormatData.status,
             );
 
             // console.log("Ticket Model after query: ", newTicketFormat);
@@ -211,6 +207,7 @@ class TicketFormat {
         tf.companyID,
         tf.busID,
         tf.priceStandard,
+        tf.status,
         pa.description,
         b.plaqueNumber,
         b.maxCapacity,
@@ -252,6 +249,75 @@ class TicketFormat {
                 companyID: row.companyID,
                 busID: row.busID,
                 priceStandard: row.priceStandard,
+                status: row.status,
+                route: row.description,
+                plaqueNumber: row.plaqueNumber,
+                maxCapacity: row.maxCapacity,
+            }));
+
+            callback(null, ticketFormats);
+        });
+    }
+
+    static getAllByLocationsAndCompanyID(originLocationID, destinationLocationID, companyID, callback) {
+        // const query = 'SELECT * FROM ticketformats WHERE companyID = ?';
+        const query = `
+            SELECT
+            tf.id,
+            tf.originLocation as originLocationID,
+            loc_origin.location_name AS originLocation,
+            tf.destinationLocation as destinationLocationID,
+            loc_dest.location_name AS destinationLocation,
+            tf.ticketTime,
+            tf.distance,
+            tf.duration,
+            tf.price,
+            tf.companyID,
+            tf.busID,
+            tf.priceStandard,
+            tf.status,
+            pa.description,
+            b.plaqueNumber,
+            b.maxCapacity,
+            c.companyName
+                FROM
+            ticketformats tf
+            JOIN locations loc_origin ON tf.originLocation = loc_origin.location_id
+            JOIN locations loc_dest ON tf.destinationLocation = loc_dest.location_id
+            JOIN buses b ON tf.busID = b.id
+            LEFT JOIN priceStandards pa ON tf.priceStandard = pa.ID
+            LEFT JOIN companies c ON tf.companyID = c.companyID
+            where tf.companyID = ? AND tf.originLocation = ? AND tf.destinationLocation = ?
+        `;
+        pool.query(query, [companyID, originLocationID, destinationLocationID], (error, results) => {
+            if (error) {
+                return callback(error);
+            }
+            // const ticketFormats = results.map(row => new TicketFormat(
+            //     row.id,
+            //     row.originLocation,
+            //     row.destinationLocation,
+            //     row.ticketTime,
+            //     row.distance,
+            //     row.duration,
+            //     row.price,
+            //     row.companyID
+            // ));
+
+            const ticketFormats = results.map(row => ({
+                id: row.id,
+                originLocationID: row.originLocationID,
+                originLocation: row.originLocation,
+                destinationLocationID: row.destinationLocationID,
+                destinationLocation: row.destinationLocation,
+                ticketTime: row.ticketTime,
+                distance: row.distance,
+                duration: row.duration,
+                price: row.price,
+                companyID: row.companyID,
+                busID: row.busID,
+                priceStandard: row.priceStandard,
+                status: row.status,
                 route: row.description,
                 plaqueNumber: row.plaqueNumber,
                 maxCapacity: row.maxCapacity,
@@ -265,12 +331,13 @@ class TicketFormat {
         const query = `
             UPDATE ticketformats
             SET ticketTime = ?,
-                busID = ?
+                busID = ?,
+                status = ?
             WHERE id = ?
         `;
 
-        const { ticketTime, busID } = updatedTicketFormat;
-        const values = [ticketTime, busID, id];
+        const { ticketTime, busID, status } = updatedTicketFormat;
+        const values = [ticketTime, busID, status, id];
 
         pool.query(query, values, (error, result) => {
             if (error) {

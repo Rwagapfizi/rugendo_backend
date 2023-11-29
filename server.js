@@ -15,6 +15,8 @@ const LocationRoutes = require('./routes/location.routes')
 const MomoRoutes = require('./routes/momoProxy.routes')
 const DeliveriesRoutes = require('./routes/delivery.routes')
 const BusesRoutes = require('./routes/bus.routes')
+const SchoolRoutes = require('./routes/school.routes')
+const BookedBusesRoutes = require('./routes/bookedBus.routes')
 
 const port = process.env.SERVER_PORT || 5000;
 
@@ -29,8 +31,10 @@ app.use(ticketFormatRoutes)
 app.use(BoughtTicketRoutes)
 app.use(LocationRoutes)
 // app.use(DeliveriesRoutes)
-app.use(MomoRoutes)
 app.use(BusesRoutes)
+app.use(SchoolRoutes)
+app.use(BookedBusesRoutes)
+app.use(MomoRoutes)
 app.use(cors());
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 

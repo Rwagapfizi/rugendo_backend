@@ -33,8 +33,6 @@ class User {
         });
     }
 
-    
-
     static create(userData, callback) {
         pool.query('INSERT INTO users SET ?', userData, (error, result) => {
             if (error) {

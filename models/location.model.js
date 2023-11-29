@@ -151,5 +151,114 @@ class Location {
     }
 }
 
+class RoutesStop {
+    constructor(ID, fromLocation, toLocation, stops) {
+        this.ID = ID;
+        this.fromLocation = fromLocation;
+        this.toLocation = toLocation;
+        this.stops = stops;
+    }
+
+    static getAllRoutesStops(callback) {
+        const query = 'SELECT * FROM routesStops';
+        pool.query(query, (error, results) => {
+            if (error) {
+                console.error('Error fetching routes stops:', error);
+                return callback(error, null);
+            }
+
+            const routesStops = results.map(routesStopData => {
+                return new RoutesStop(
+                    routesStopData.ID,
+                    routesStopData.fromLocation,
+                    routesStopData.toLocation,
+                    routesStopData.stops,
+                );
+            });
+
+            callback(null, routesStops);
+        });
+    }
+
+    static getByID(id, callback) {
+        const query = 'SELECT * FROM routesStops where ID= ?';
+        pool.query(query, [id], (error, results) => {
+            if (error) {
+                console.error('Error fetching routes stops:', error);
+                return callback(error, null);
+            }
+            if (results.length === 0) {
+                return callback(null, null); // No delivery found
+            }
+
+            const row = results[0];
+
+            const routeStop = new RoutesStop(
+                row.ID,
+                row.fromLocation,
+                row.toLocation,
+                row.stops,
+            );
+
+            callback(null, routeStop);
+        });
+    }
+
+    static getByLocations(fromLocationID, toLocationID, callback) {
+        const query = 'SELECT * FROM routesStops where fromLocation = ? AND toLocation = ?';
+        pool.query(query, [fromLocationID, toLocationID], (error, results) => {
+            if (error) {
+                console.error('Error fetching routes stops:', error);
+                return callback(error, null);
+            }
+            if (results.length === 0) {
+                return callback(null, null); // No delivery found
+            }
+
+            const row = results[0];
+
+            const routeStop = new RoutesStop(
+                row.ID,
+                row.fromLocation,
+                row.toLocation,
+                row.stops,
+            );
+
+            callback(null, routeStop);
+        });
+    }
+
+    static createRoutesStop(routesStopData, callback) {
+        const query = `INSERT INTO routesStops(fromLocation, toLocation, stops) VALUES (?, ?, ?)`;
+        pool.query(query, [routesStopData.fromLocation, routesStopData.toLocation, routesStopData.stops], (error, result) => {
+            if (error) {
+                console.error('Error creating routes stop:', error);
+                return callback(error, null);
+            }
+
+            const newRoutesStop = new RoutesStop(
+                result.insertId,
+                routesStopData.fromLocation, 
+                routesStopData.toLocation, 
+                routesStopData.stops
+            )
+
+            callback(null, newRoutesStop);
+        });
+    }
+
+    static deleteRoutesStopByID(ID, callback) {
+        const query = 'DELETE FROM routesStops WHERE ID = ?';
+        pool.query(query, [ID], (error, result) => {
+            if (error) {
+                console.error('Error deleting routes stop:', error);
+                return callback(error, null);
+            }
+
+            callback(null, result.affectedRows > 0);
+        });
+    }
+}
+
 // module.exports = { Station, Location };
-module.exports = { Location };
+module.exports = { Location, RoutesStop };

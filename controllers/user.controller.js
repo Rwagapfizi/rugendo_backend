@@ -266,8 +266,9 @@ const getUserDetails = (req, res) => {
                                     company: {
                                         companyID: company.companyID,
                                         companyName: company.companyName,
-                                        companyLocation: company.companyLocation,
                                         workLocations: company.workLocations,
+                                        bookingPrice: company.bookingPrice,
+                                        companyTelephone: company.companyTelephone,
                                     },
                                 };
                                 res.status(200).json(userDetails);
@@ -279,7 +280,6 @@ const getUserDetails = (req, res) => {
         }
     });
 };
-
 
 const getAllUsers = async (req, res) => {
     // #swagger.tags = ['Users']

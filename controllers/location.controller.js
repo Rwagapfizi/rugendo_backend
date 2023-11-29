@@ -1,5 +1,5 @@
 // const { Station, Location } = require('../models/station.model');
-const { Location } = require('../models/location.model');
+const { Location, RoutesStop } = require('../models/location.model');
 
 // const getAllStations = (req, res) => {
 //     // #swagger.tags = ['Stations']
@@ -137,6 +137,108 @@ const deleteLocationByID = (req, res) => {
     });
 };
 
+const getAllRoutesStops = (req, res) => {
+    // #swagger.tags = ['Routes Stops']
+    // #swagger.description = 'Endpoint to get all routes stops'
+    RoutesStop.getAllRoutesStops((error, routesStops) => {
+        if (error) {
+            console.error('Error fetching routes stops:', error);
+            return res.status(500).json({ error: 'Failed to fetch routes stops' });
+        }
+
+        res.status(200).json(routesStops);
+    });
+};
+
+const getRoutesStopByID = (req, res) => {
+    // #swagger.tags = ['Routes Stops']
+    // #swagger.description = 'Endpoint to get a RoutesStop by ID'
+    const routesStopID = req.params.id;
+    RoutesStop.getByID(routesStopID, (error, routesStop) => {
+        if (error) {
+            console.error('Error fetching routesStop by ID:', error);
+            return res.status(500).json({ error: 'Failed to fetch routes Stop' });
+        } else if (!routesStop) {
+            return res.status(404).json({ error: 'Routes Stop not found' });
+        } else {
+            return res.status(200).json(routesStop);
+        }
+    });
+};
+
+const getRoutesStopByLocationsID = (req, res) => {
+    // #swagger.tags = ['Routes Stops']
+    // #swagger.description = 'Endpoint to get a RoutesStop by ID'
+    const fromLocationID = req.params.fromLocationID;
+    const toLocationID = req.params.toLocationID;
+    RoutesStop.getByLocations(fromLocationID, toLocationID, (error, routesStop) => {
+        // if (error) {
+        //     console.error('Error fetching routesStop by ID:', error);
+        //     return res.status(500).json({ error: 'Failed to fetch routes Stop' });
+        // } else if (!routesStop) {
+        //     return res.status(404).json({ error: 'Routes Stop not found' });
+        // } else {
+        //     return res.status(200).json(routesStop);
+        // }
+        if (error) {
+            console.error('Error fetching routesStop by ID:', error);
+            return res.status(500).json({ error: 'Failed to fetch routes Stop' });
+        } else {
+            if (!routesStop) {
+                RoutesStop.getByLocations(toLocationID, fromLocationID, (error, routesStop) => {
+                    if (error) {
+                        console.error('Error fetching routesStop by ID:', error);
+                        return res.status(500).json({ error: 'Failed to fetch routes Stop' });
+                    } else {
+                        if (!routesStop) {
+                            return res.status(404).json({ error: 'Routes Stop not found' });
+                        } else {
+                            return res.status(200).json(routesStop);
+                        }
+                    }
+                })
+            } else {
+                return res.status(200).json(routesStop);
+            }
+        }
+    });
+};
+
+const createRoutesStop = (req, res) => {
+    // #swagger.tags = ['Routes Stops']
+    // #swagger.description = 'Endpoint to create a routes Stop'
+    const { fromLocation, toLocation, stops } = req.body;
+
+    const routesStopData = { fromLocation, toLocation, stops }
+    RoutesStop.createRoutesStop(routesStopData, (error, routesStop) => {
+        if (error) {
+            console.error('Error creating routes Stop', error);
+            return res.status(500).json({ error: 'Failed to create routes Stop' });
+        }
+
+        return res.status(201).json({ message: 'Routes Stop created successfully', routesStop });
+    });
+};
+
+const deleteRoutesStopByID = (req, res) => {
+    // #swagger.tags = ['Routes Stops']
+    // #swagger.description = 'Endpoint to delete a routesStop by ID'
+    const routesStopID = req.params.id;
+
+    RoutesStop.deleteRoutesStopByID(routesStopID, (error, deleted) => {
+        if (error) {
+            console.error('Error deleting routes Stop', error);
+            return res.status(500).json({ error: 'Failed to delete routes Stop' });
+        }
+
+        if (!deleted) {
+            return res.status(404).json({ error: 'Routes Stop not found' });
+        }
+
+        res.status(200).json({ message: 'Routes Stop deleted successfully' });
+    });
+};
+
 // module.exports = {
 //     getAllStations,
 //     createStation,
@@ -151,5 +253,10 @@ module.exports = {
     getLocationByID,
     getPricesFromLocations,
     createLocation,
-    deleteLocationByID
+    deleteLocationByID,
+    getAllRoutesStops,
+    getRoutesStopByID,
+    getRoutesStopByLocationsID,
+    createRoutesStop,
+    deleteRoutesStopByID
 };

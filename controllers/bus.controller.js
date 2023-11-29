@@ -49,10 +49,35 @@ const busController = {
         });
     },
 
+    getPrivateBusesByCompanyID: (req, res) => {
+        // #swagger.tags = ['Buses']
+        // #swagger.description = 'Endpoint to get private Buses by CompanyID'
+        const companyID = req.params.companyID;
+        Bus.getPrivateByCompanyID(companyID, (error, buses) => {
+            if (error) {
+                console.error(error)
+                return res.status(500).json({ error: 'Failed to fetch buses.' });
+            }
+            res.status(200).json(buses);
+        });
+    },
+
+    getBusesByCompanyIDAndBought: (req, res) => {
+        // #swagger.tags = ['Buses']
+        // #swagger.description = 'Endpoint to get all Buses by CompanyID and Bought Tickets'
+        const companyID = req.params.companyID;
+        Bus.getBoughtByCompanyID(companyID, (error, buses) => {
+            if (error) {
+                return res.status(500).json({ error: 'Failed to fetch buses.' });
+            }
+            res.status(200).json(buses);
+        });
+    },
+
     addBus: (req, res) => {
         // #swagger.tags = ['Buses']
         // #swagger.description = 'Endpoint to add a bus'
-        const { plaqueNumber, maxCapacity, model, password, companyID } = req.body;
+        const { plaqueNumber, maxCapacity, model, password, status, companyID } = req.body;
 
         // Check if all required fields are present
         if (!plaqueNumber || !maxCapacity || !model || !password || !companyID) {
@@ -79,6 +104,7 @@ const busController = {
                     maxCapacity,
                     model,
                     password: hashedPassword, // Store the hashed password
+                    status,
                     companyID,
                 };
 
@@ -145,7 +171,7 @@ const busController = {
         });
     },
 
-    assignBus: (req, res) => {
+    assignTicketsToBus: (req, res) => {
         // #swagger.tags = ['Assign Bus']
         // #swagger.description = 'Endpoint to assign a ticket to a bus'
         const { boughtTicketID, busID } = req.body;
@@ -170,7 +196,7 @@ const busController = {
                 }
                 // res.status(201).json(newBus);
                 res.status(201).json({
-                    message: 'Bus registered successfully',
+                    message: 'Tickets assigned to bus successfully',
                     assignmentResponse: assignmentResponse,
                 });
             });
@@ -299,6 +325,78 @@ const busController = {
                     // Check if all tickets have been processed
                     if (ticketsForToday.length === boughtTickets.length) {
                         res.status(200).json({ ticketsForToday });
+                    }
+                });
+            };
+
+            // Fetch ticket format details for each ticket bought today
+            boughtTickets.forEach((ticket) => {
+                fetchTicketFormatDetails(ticket);
+            });
+        });
+    },
+
+    getBoughtTicketsByDateAndBusID: (req, res) => {
+        // #swagger.tags = ['Buses']
+        // #swagger.description = 'Endpoint to get Bought Tickets for today\'s date by BusID'
+
+        // Get today's date in the format YYYY-MM-DD
+        const busID = req.params.busID;
+        const companyID = req.params.companyID;
+        const date = req.params.date;
+
+        // Fetch all bought tickets for today's date
+        Bus.getAllByDateAndBusID(date, busID, companyID, (error, boughtTickets) => {
+            if (error) {
+                console.error('Error fetching bought tickets for today:', error);
+                return res.status(500).json({ error: 'Failed to fetch bought tickets for today' });
+            }
+
+            if (boughtTickets.length === 0) {
+                // console.log("No tickets today")
+                return res.status(200).json({ message: 'No tickets bought for today' });
+            }
+
+            // Map the bought tickets to include ticket format details
+            const ticketsForGivenDate = [];
+
+            // Function to fetch ticket format details for a ticket
+            const fetchTicketFormatDetails = (ticket) => {
+                TicketFormat.getById(ticket.ticketFormatID, (formatError, format) => {
+                    if (formatError) {
+                        console.error('Error fetching ticket format details:', formatError);
+                        return res.status(500).json({ error: 'Failed to fetch ticket format details' });
+                    }
+
+                    if (!format) {
+                        return res.status(404).json({ error: 'Ticket format not found' });
+                    }
+
+                    const ticketWithFormat = {
+                        id: ticket.id,
+                        customerID: ticket.customerID,
+                        ticketFormatID: ticket.ticketFormatID,
+                        ticketDate: ticket.ticketDate,
+                        plaqueNumber: ticket.plaqueNumber,
+                        paymentMethodUsed: ticket.paymentMethodUsed,
+                        timeBought: ticket.timeBought,
+                        ticketFormat: {
+                            originLocation: format.originLocation,
+                            destinationLocation: format.destinationLocation,
+                            ticketTime: format.ticketTime,
+                            price: format.price,
+                            distance: format.distance,
+                            duration: format.duration,
+                            plaqueNumber: format.plaqueNumber,
+                            maxCapacity: format.maxCapacity,
+                        },
+                    };
+
+                    ticketsForGivenDate.push(ticketWithFormat);
+
+                    // Check if all tickets have been processed
+                    if (ticketsForGivenDate.length === boughtTickets.length) {
+                        res.status(200).json({ ticketsForToday: ticketsForGivenDate });
                     }
                 });
             };

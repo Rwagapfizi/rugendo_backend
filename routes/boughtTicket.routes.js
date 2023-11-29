@@ -46,7 +46,10 @@ router.get('/bought-tickets/month/:companyID', BoughtTicketController.getBoughtT
 router.get('/bought-tickets/lastMonths/:companyID', BoughtTicketController.getLast6MonthsRevenue);
 
 // Get Bought Tickets for the selected date by Company ID
-router.get('/bought-tickets/by-date/:companyID/:selectedDate', BoughtTicketController.getBoughtTicketsByDate);
+router.get('/bought-tickets/boughtDate/:companyID/:date', BoughtTicketController.getBoughtTicketsByDateAndCompanyID);
+
+// Get Bought Tickets for the selected date by Company ID
+router.get('/bought-tickets/date/:companyID/:selectedDate', BoughtTicketController.getBoughtTicketsByDate);
 
 // Route to update ticketDate by ID
 router.put('/bought-tickets/update-date/:id',BoughtTicketController.updateTicketDate);

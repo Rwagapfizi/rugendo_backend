@@ -31,7 +31,7 @@ const createBoughtTicket = (req, res) => {
             // Set the customerID to the ID of the logged-in customer
             const customerID = userID;
 
-            const { ticketFormatID, ticketDate, plaqueNumber, paymentMethodUsed } = req.body;
+            const { ticketFormatID, ticketDate, plaqueNumber, paymentMethodUsed, customerNames, originStop } = req.body;
 
             // console.log(req.body)
             // console.log(ticketDate)
@@ -78,9 +78,12 @@ const createBoughtTicket = (req, res) => {
                                 ticketDate,
                                 plaqueNumber,
                                 paymentMethodUsed,
+                                customerNames,
+                                originStop,
                                 // timeBought
                             };
 
+                            // console.log(newBoughtTicket)
                             BoughtTicket.create(newBoughtTicket, (createError, result) => {
                                 if (createError) {
                                     console.error('Failed to create bought ticket:', createError);
@@ -95,10 +98,13 @@ const createBoughtTicket = (req, res) => {
                                         timeBought: result.timeBought,
                                         plaqueNumber: result.plaqueNumber,
                                         paymentMethodUsed: result.paymentMethodUsed,
+                                        customerNames: result.customerNames,
+                                        originStop: result.originStop,
                                         company: {
                                             companyID: company.companyID,
                                             companyName: company.companyName,
-                                            companyLocation: company.companyLocation,
+                                            bookingPrice: company.bookingPrice,
+                                            companyTelephone: company.companyTelephone,
                                         },
                                     };
                                     res.status(201).json({
@@ -158,6 +164,8 @@ const getBoughtTicketsForToday = (req, res) => {
                     plaqueNumber: ticket.plaqueNumber,
                     paymentMethodUsed: ticket.paymentMethodUsed,
                     timeBought: ticket.timeBought,
+                    customerNames: ticket.customerNames,
+                    originStop: ticket.originStop,
                     ticketFormat: {
                         originLocation: format.originLocation,
                         destinationLocation: format.destinationLocation,
@@ -169,6 +177,7 @@ const getBoughtTicketsForToday = (req, res) => {
                         route: format.route,
                         plaqueNumber: format.plaqueNumber,
                         maxCapacity: format.maxCapacity,
+                        status: format.status,
                     },
                 };
 
@@ -232,6 +241,8 @@ const getBoughtTicketsForTodayByCompanyID = (req, res) => {
                     plaqueNumber: ticket.plaqueNumber,
                     paymentMethodUsed: ticket.paymentMethodUsed,
                     timeBought: ticket.timeBought,
+                    customerNames: ticket.customerNames,
+                    originStop: ticket.originStop,
                     ticketFormat: {
                         originLocation: format.originLocation,
                         destinationLocation: format.destinationLocation,
@@ -243,6 +254,7 @@ const getBoughtTicketsForTodayByCompanyID = (req, res) => {
                         route: format.route,
                         plaqueNumber: format.plaqueNumber,
                         maxCapacity: format.maxCapacity,
+                        status: format.status,
                     },
                 };
 
@@ -262,6 +274,78 @@ const getBoughtTicketsForTodayByCompanyID = (req, res) => {
     });
 };
 
+const getBoughtTicketsByDateAndCompanyID = (req, res) => {
+    // #swagger.tags = ['Bought Ticket']
+    // #swagger.description = 'Endpoint to get Bought Tickets by Date and CompanyID'
+
+    const { companyID, date } = req.params;
+
+    // Fetch bought tickets for the given date
+    BoughtTicket.getAllByDateAndCompanyID(date, companyID, (error, boughtTickets) => {
+        if (error) {
+            console.error('Error fetching bought tickets:', error);
+            return res.status(500).json({ error: 'Failed to fetch bought tickets' });
+        }
+
+        if (boughtTickets.length === 0) {
+            return res.status(200).json({ message: 'No tickets bought for this date' });
+        }
+
+        // Map the bought tickets to include ticket format details
+        const ticketsForGivenDate = [];
+
+        const fetchTicketFormatDetails = (ticket) => {
+            TicketFormat.getById(ticket.ticketFormatID, (formatError, format) => {
+                if (formatError) {
+                    console.error('Error fetching ticket format details:', formatError);
+                    return res.status(500).json({ error: 'Failed to fetch ticket format details' });
+                }
+
+                if (!format) {
+                    return res.status(404).json({ error: 'Ticket format not found' });
+                }
+
+                const ticketWithFormat = {
+                    id: ticket.id,
+                    customerID: ticket.customerID,
+                    ticketFormatID: ticket.ticketFormatID,
+                    ticketDate: ticket.ticketDate,
+                    plaqueNumber: ticket.plaqueNumber,
+                    paymentMethodUsed: ticket.paymentMethodUsed,
+                    timeBought: ticket.timeBought,
+                    customerNames: ticket.customerNames,
+                    originStop: ticket.originStop,
+                    ticketFormat: {
+                        originLocation: format.originLocation,
+                        destinationLocation: format.destinationLocation,
+                        ticketTime: format.ticketTime,
+                        price: format.price,
+                        distance: format.distance,
+                        duration: format.duration,
+                        priceStandard: format.priceStandard,
+                        route: format.route,
+                        plaqueNumber: format.plaqueNumber,
+                        maxCapacity: format.maxCapacity,
+                        status: format.status,
+                    },
+                };
+
+                ticketsForGivenDate.push(ticketWithFormat);
+
+                if (ticketsForGivenDate.length === boughtTickets.length) {
+                    // console.log(ticketsForDate)
+                    res.status(200).json({ ticketsForGivenDate });
+                }
+            });
+        };
+
+        boughtTickets.forEach((ticket) => {
+            fetchTicketFormatDetails(ticket);
+        });
+    });
+};
+
+
 const getLast7DaysRevenue = (req, res) => {
     // #swagger.tags = ['Bought Ticket']
     // #swagger.description = 'Endpoint to get the total revenue for each of the last 7 days'
@@ -270,9 +354,6 @@ const getLast7DaysRevenue = (req, res) => {
     const companyID = req.params.companyID;
     const endDate = moment().format('YYYY-MM-DD'); // Today's date
     const startDate = moment().subtract(6, 'days').format('YYYY-MM-DD'); // 6 days ago
-
-    // Initialize an object to store the daily revenue
-    // const dailyRevenue = {};
 
     // Initialize an array to store the daily revenue objects
     const dailyRevenues = [];
@@ -314,15 +395,8 @@ const getLast7DaysRevenue = (req, res) => {
             // Wait for all format promises to resolve
             Promise.all(formatPromises).then((prices) => {
                 const dailyTotalRevenue = prices.reduce((dailyTotal, price) => dailyTotal + price, 0);
-
-                // Store the date and daily total revenue in the dailyRevenues array
-                // dailyRevenues.push({ date, dailyRevenue: dailyTotalRevenue });
-
-                // Store the date (formatted as MM-DD) and daily total revenue in the dailyRevenues array
                 dailyRevenues.push({ date: formatDateAsMMDD(date), dailyRevenue: dailyTotalRevenue });
 
-
-                // Check if all days have been processed
                 if (dailyRevenues.length === 7) {
                     res.status(200).json(dailyRevenues);
                 }
@@ -491,7 +565,7 @@ const getBoughtTicketsForCurrentMonthByCompanyID = (req, res) => {
         }
 
         if (boughtTickets.length === 0) {
-            return res.status(404).json({ message: 'No tickets bought for the current month' });
+            return res.status(200).json({ message: 'No tickets bought for the current month' });
         }
 
         // Map the bought tickets to include ticket format details
@@ -517,6 +591,8 @@ const getBoughtTicketsForCurrentMonthByCompanyID = (req, res) => {
                     plaqueNumber: ticket.plaqueNumber,
                     paymentMethodUsed: ticket.paymentMethodUsed,
                     timeBought: ticket.timeBought,
+                    customerNames: ticket.customerNames,
+                    originStop: ticket.originStop,
                     ticketFormat: {
                         originLocation: format.originLocation,
                         destinationLocation: format.destinationLocation,
@@ -524,6 +600,11 @@ const getBoughtTicketsForCurrentMonthByCompanyID = (req, res) => {
                         price: format.price,
                         distance: format.distance,
                         duration: format.duration,
+                        priceStandard: format.priceStandard,
+                        route: format.route,
+                        plaqueNumber: format.plaqueNumber,
+                        maxCapacity: format.maxCapacity,
+                        status: format.status,
                     },
                 };
 
@@ -531,7 +612,7 @@ const getBoughtTicketsForCurrentMonthByCompanyID = (req, res) => {
 
                 // Check if all tickets have been processed
                 if (ticketsForCurrentMonth.length === boughtTickets.length) {
-                    res.status(200).json(ticketsForCurrentMonth);
+                    res.status(200).json({ ticketsForCurrentMonth });
                 }
             });
         };
@@ -548,11 +629,6 @@ const getBoughtTicketsByDate = (req, res) => {
     // #swagger.description = 'Endpoint to get all bought tickets of the given companyID in the given date
     const { companyID, selectedDate } = req.params;
 
-    // Implement this logic based on your data model
-    // You may need to adjust the database query to match your schema
-    // Map the bought tickets to include ticket format details
-    const ticketsForGivenDate = [];
-
     // Assuming you have a model method like BoughtTicket.getByDateAndCompanyID
     BoughtTicket.getAllByTicketDateAndCompanyID(selectedDate, companyID, (error, boughtTickets) => {
         if (error) {
@@ -565,6 +641,9 @@ const getBoughtTicketsByDate = (req, res) => {
             return res.status(200).json({ message: 'Ticket not found' });
         }
 
+        // Map the bought tickets to include ticket format details
+        const ticketsForGivenDate = [];
+
         const fetchTicketFormatDetails = (ticket) => {
 
             const ticketWithFormat = {
@@ -575,6 +654,8 @@ const getBoughtTicketsByDate = (req, res) => {
                 plaqueNumber: ticket.plaqueNumber,
                 paymentMethodUsed: ticket.paymentMethodUsed,
                 timeBought: ticket.timeBought,
+                customerNames: ticket.customerNames,
+                originStop: ticket.originStop,
                 // seatsLeft: 30
             };
 
@@ -601,9 +682,6 @@ const getAllCompanyTickets = (req, res) => {
     if (req.cookies.userRole !== 'WORKER') {
         return res.status(403).json({ error: 'Forbidden, access restricted to workers' });
     }
-
-    // console.log(req.cookies);
-
     const companyID = req.cookies.userCompanyID; // Fetch the companyID from the logged-in user's cookies
 
     // Fetch all bought tickets by the company ID of the logged-in worker
@@ -621,12 +699,12 @@ const getBoughtTicketsByCompanyID = (req, res) => {
     // #swagger.tags = ['Bought Ticket']
     // #swagger.description = 'Endpoint to get all bought tickets of the given companyID'
     const { companyID } = req.params;
-    
+
     BoughtTicket.getAllByCompanyID(companyID, (error, boughtTickets) => {
         if (error) {
             return res.status(500).json({ error: 'Failed to fetch boughtTickets' });
         }
-        
+
         if (!boughtTickets || boughtTickets.length === 0) {
             return res.status(404).json({ message: 'No boughtTickets found for the provided companyID' });
         }
@@ -650,8 +728,6 @@ const getBoughtTicketsByCompanyIDToday = (req, res) => {
         if (!boughtTickets || boughtTickets.length === 0) {
             return res.status(404).json({ message: 'No boughtTickets found for the provided companyID' });
         }
-
-        // console.log(boughtTickets)
         res.status(200).json(boughtTickets);
     });
 };
@@ -671,8 +747,6 @@ const getAssignedBoughtTicketsByCompanyIDToday = (req, res) => {
         if (!boughtTickets || boughtTickets.length === 0) {
             return res.status(404).json({ message: 'No boughtTickets found for the provided companyID' });
         }
-
-        // console.log(boughtTickets)
         res.status(200).json(boughtTickets);
     });
 };
@@ -731,9 +805,11 @@ const generateReceipts = (req, res) => {
                         const {
                             id,
                             ticketDate,
+                            ticketFormatID,
                             paymentMethodUsed,
                             timeBought,
-                            status,
+                            customerNames,
+                            originStop,
                             ticketFormat: {
                                 originLocation,
                                 destinationLocation,
@@ -745,6 +821,7 @@ const generateReceipts = (req, res) => {
                                 route,
                                 plaqueNumber,
                                 maxCapacity,
+                                status
                             },
                             company: { companyName },
                         } = ticket;
@@ -752,20 +829,23 @@ const generateReceipts = (req, res) => {
                         const receipt = {
                             ticketID: id,
                             buyerNames: `${user.firstName} ${user.lastName}`,
+                            customerNames,
+                            originStop,
                             companyName,
                             location: `From ${originLocation} To ${destinationLocation}`,
                             ticketDate,
                             timeBought,
                             paymentMethodUsed,
+                            ticketFormatID,
                             ticketTime,
                             price,
                             distance,
                             duration,
                             priceStandard,
+                            status,
                             route,
                             plaqueNumber,
                             maxCapacity,
-                            status
                         };
 
                         receipts.push(receipt);
@@ -822,9 +902,11 @@ const generateSingleReceipt = (req, res) => {
                     const {
                         id,
                         ticketDate,
+                        ticketFormatID,
                         paymentMethodUsed,
                         timeBought,
-                        status,
+                        customerNames,
+                        originStop,
                         ticketFormat: {
                             originLocation,
                             destinationLocation,
@@ -833,6 +915,7 @@ const generateSingleReceipt = (req, res) => {
                             distance,
                             duration,
                             priceStandard,
+                            status,
                             route,
                             plaqueNumber,
                             maxCapacity,
@@ -843,20 +926,23 @@ const generateSingleReceipt = (req, res) => {
                     const receipt = {
                         ticketID: id,
                         buyerNames: `${user.firstName} ${user.lastName}`,
+                        customerNames,
+                        originStop,
                         companyName,
                         location: `From ${originLocation} To ${destinationLocation}`,
                         ticketDate,
                         timeBought,
                         paymentMethodUsed,
+                        ticketFormatID,
                         ticketTime,
                         price,
                         distance,
                         duration,
                         priceStandard,
+                        status,
                         route,
                         plaqueNumber,
                         maxCapacity,
-                        status
                     };
 
                     res.status(200).json(receipt);
@@ -931,13 +1017,12 @@ const cancelBoughtTicketByID = (req, res) => {
     });
 };
 
-// Controller method to update ticketDate
 const updateTicketDate = (req, res) => {
     // #swagger.tags = ['Bought Ticket']
     // #swagger.description = 'Endpoint to update a Bought Ticket\'s ticket date by ID'
 
     const ticketID = req.params.id;
-    const { newTicketDate } = req.body; 
+    const { newTicketDate } = req.body;
 
     BoughtTicket.updateTicketDate(ticketID, newTicketDate, (error, updatedTicket) => {
         if (error) {
@@ -962,6 +1047,7 @@ module.exports = {
     generateSingleReceipt,
     getBoughtTicketsForToday,
     getBoughtTicketsForTodayByCompanyID,
+    getBoughtTicketsByDateAndCompanyID,
     getBoughtTicketsForCurrentMonthByCompanyID,
     getLast7DaysRevenue,
     getLast5MonthsRevenue,

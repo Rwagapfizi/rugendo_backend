@@ -2,12 +2,13 @@ const pool = require('../utils/mysql');
 const moment = require('moment');
 
 class Bus {
-    constructor(id, plaqueNumber, maxCapacity, model, password, companyID) {
+    constructor(id, plaqueNumber, maxCapacity, model, password, status, companyID) {
         this.id = id;
         this.plaqueNumber = plaqueNumber;
         this.maxCapacity = maxCapacity;
         this.model = model;
         this.password = password;
+        this.status = status;
         this.companyID = companyID;
     }
 
@@ -25,8 +26,10 @@ class Bus {
                 row.maxCapacity,
                 row.model,
                 row.password,
+                row.status,
                 row.companyID
             ));
+            
             callback(null, buses);
         });
     }
@@ -49,6 +52,7 @@ class Bus {
                 busData.maxCapacity,
                 busData.model,
                 busData.password,
+                busData.status,
                 busData.companyID
             );
 
@@ -69,6 +73,55 @@ class Bus {
                 row.maxCapacity,
                 row.model,
                 row.password,
+                row.status,
+                row.companyID
+            ));
+
+            callback(null, buses);
+        });
+    }
+
+    static getPrivateByCompanyID(companyID, callback) {
+        const query = 'SELECT * FROM buses WHERE status = \'PRIVATE\' AND companyID = ?';
+        pool.query(query, [companyID], (error, results) => {
+            if (error) {
+                return callback(error);
+            }
+
+            const buses = results.map(row => new Bus(
+                row.id,
+                row.plaqueNumber,
+                row.maxCapacity,
+                row.model,
+                row.password,
+                row.status,
+                row.companyID
+            ));
+
+            callback(null, buses);
+        });
+    }
+
+    static getBoughtByCompanyID(companyID, callback) {
+        const query = `SELECT DISTINCT b.*
+            FROM boughtTickets bt
+            JOIN ticketFormats tf ON bt.ticketFormatID = tf.id
+            JOIN buses b ON tf.busID = b.id
+            WHERE tf.companyID = ?
+            ORDER BY tf.ticketTime ASC
+        `;
+        pool.query(query, [companyID], (error, results) => {
+            if (error) {
+                return callback(error);
+            }
+
+            const buses = results.map(row => new Bus(
+                row.id,
+                row.plaqueNumber,
+                row.maxCapacity,
+                row.model,
+                row.password,
+                row.status,
                 row.companyID
             ));
 
@@ -77,11 +130,18 @@ class Bus {
     }
 
     static getAllByDateAndBusID(date, busID, companyID, callback) {
+        // const query = `
+        //     SELECT bt.* FROM boughttickets bt
+        //     JOIN ticketformats tf on bt.ticketFormatID = tf.id
+        //     JOIN buses b ON tf.busID = b.id
+        //     WHERE Date(bt.timeBought) = "${date}" AND tf.busID = ? AND tf.companyID = ?
+        // `;
         const query = `
             SELECT bt.* FROM boughttickets bt
             JOIN ticketformats tf on bt.ticketFormatID = tf.id
             JOIN buses b ON tf.busID = b.id
-            WHERE Date(bt.timeBought) = "${date}" AND tf.busID = ? AND tf.companyID = ?
+            JOIN ticketAssignments ta ON bt.id = ta.boughtTicketID
+            WHERE Date(bt.timeBought) = "${date}" AND ta.busID = ? AND tf.companyID = ?
         `;
         pool.query(query, [busID, companyID], (error, results) => {
             if (error) {
@@ -122,7 +182,8 @@ class Bus {
             SELECT bt.* FROM boughttickets bt
             JOIN ticketformats tf ON bt.ticketFormatID = tf.id
             JOIN buses b ON tf.busID = b.id
-            WHERE DATE(bt.timeBought) >= ? AND DATE(bt.timeBought) <= ? AND b.id = ? AND tf.companyID = ?
+            JOIN ticketAssignments ta ON bt.id = ta.boughtTicketID
+            WHERE DATE(bt.timeBought) >= ? AND DATE(bt.timeBought) <= ? AND ta.busID = ? AND tf.companyID = ?
         `;
 
         pool.query(query, [startDate, endDate, busID, companyID], (error, results) => {
@@ -166,6 +227,7 @@ class Bus {
                 busData.maxCapacity,
                 busData.model,
                 busData.password,
+                busData.status,
                 busData.companyID
             );
 
@@ -187,6 +249,7 @@ class Bus {
                 busData.maxCapacity,
                 busData.model,
                 busData.password,
+                busData.status,
                 busData.companyID
             );
             callback(null, newBus);
@@ -246,7 +309,7 @@ class Bus {
         //     GROUP BY b.id
         // `;
         const query = `
-            SELECT b.plaqueNumber, ta.boughtTicketID, u.firstName, u.lastName AS assignedTickets
+            SELECT b.plaqueNumber, ta.boughtTicketID, u.firstName, u.lastName, bt.customerNames, bt.originStop
             FROM buses b
             LEFT JOIN ticketAssignments ta ON b.id = ta.busID
             JOIN boughtTickets bt on ta.boughtTicketID = bt.id
@@ -276,35 +339,6 @@ class Bus {
             callback(null, results);
         });
     }
-
-    // static getDriverData(busID, callback) {
-    //     const query = `
-    //         SELECT b.plaqueNumber, bt.*
-    //         FROM buses b
-    //         LEFT JOIN ticketAssignments ta ON b.id = ta.busID
-    //         INNER JOIN boughtTickets bt ON ta.boughtTicketID = bt.id
-    //         WHERE b.id = 4
-    //     `;
-
-    //     pool.query(query, [busID], (error, results) => {
-    //         if (error) {
-    //             console.error('Error fetching driver data for bus:', error);
-    //             return callback(error, null);
-    //         }
-
-    //         if (results.length === 0) {
-    //             return callback(null, null); // No matching bus found
-    //         }
-
-    //         const driverData = results[0];
-    //         const driverBusData = {
-    //             plaqueNumber: driverData.plaqueNumber,
-    //             assignedTickets: driverData.assignedTickets ? driverData.assignedTickets.split(',').map(Number) : [],
-    //         };
-
-    //         callback(null, driverBusData);
-    //     });
-    // }
 
     static assignToBus(assignmentData, callback) {
         const query = 'INSERT INTO ticketAssignments SET ?';
@@ -342,6 +376,7 @@ class Bus {
                 busData.maxCapacity,
                 busData.model,
                 busData.password,
+                busData.status,
                 busData.companyID
             );
 

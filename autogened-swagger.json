@@ -233,6 +233,15 @@
                 },
                 "workLocations": {
                   "example": "any"
+                },
+                "companyLogo": {
+                  "example": "any"
+                },
+                "bookingPrice": {
+                  "example": "any"
+                },
+                "companyTelephone": {
+                  "example": "any"
                 }
               }
             }
@@ -267,12 +276,58 @@
         }
       }
     },
+    "/companies/getCompanies/private": {
+      "get": {
+        "tags": [
+          "Companies"
+        ],
+        "description": "Endpoint to get all Companies with Private Buses",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/companies/locate/{from}/{to}": {
       "get": {
         "tags": [
           "Companies"
         ],
         "description": "Endpoint to get all Companies by Locations",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "to",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/companies/locate/{from}/{to}/student": {
+      "get": {
+        "tags": [
+          "Companies"
+        ],
+        "description": "Endpoint to get all Companies by Locations and have ticket formats for school season",
         "parameters": [
           {
             "name": "from",
@@ -356,136 +411,6 @@
         }
       }
     },
-    "/locations": {
-      "get": {
-        "tags": [
-          "Locations"
-        ],
-        "description": "Endpoint to get all locations",
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/location/{id}": {
-      "get": {
-        "tags": [
-          "Locations"
-        ],
-        "description": "Endpoint to get a Location by ID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/prices/{fromLocationID}/{toLocationID}": {
-      "get": {
-        "tags": [
-          "Locations"
-        ],
-        "description": "Endpoint to get prices standards of given Locations",
-        "parameters": [
-          {
-            "name": "fromLocationID",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "toLocationID",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/locations/add": {
-      "post": {
-        "tags": [
-          "Locations"
-        ],
-        "description": "Endpoint to create a location",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "locationName": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/locations/delete/{id}": {
-      "delete": {
-        "tags": [
-          "Locations"
-        ],
-        "description": "Endpoint to delete a location by ID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
     "/ticket-formats/add": {
       "post": {
         "tags": [
@@ -529,6 +454,9 @@
                   "example": "any"
                 },
                 "priceStandard": {
+                  "example": "any"
+                },
+                "status": {
                   "example": "any"
                 }
               }
@@ -615,6 +543,42 @@
         }
       }
     },
+    "/ticket-formats/locate/{companyID}/{origin}/{destination}": {
+      "get": {
+        "tags": [
+          "Ticket Format"
+        ],
+        "description": "Endpoint to get all Ticket Formats owned by given Company ID based on given locations",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "origin",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "destination",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/ticket-formats/detailed/all": {
       "get": {
         "tags": [
@@ -678,6 +642,9 @@
                   "example": "any"
                 },
                 "busID": {
+                  "example": "any"
+                },
+                "status": {
                   "example": "any"
                 },
                 "companyID": {
@@ -766,6 +733,12 @@
                   "example": "any"
                 },
                 "paymentMethodUsed": {
+                  "example": "any"
+                },
+                "customerNames": {
+                  "example": "any"
+                },
+                "originStop": {
                   "example": "any"
                 }
               }
@@ -1120,12 +1093,45 @@
         }
       }
     },
-    "/bought-tickets/by-date/{companyID}/{selectedDate}": {
+    "/bought-tickets/boughtDate/{companyID}/{date}": {
       "get": {
         "tags": [
           "Bought Ticket"
         ],
-        "description": "Endpoint to get all bought tickets of the given companyID in the given date\r  const { companyID, selectedDate } = req.params;\r \r  const ticketsForGivenDate = [];\r \r  BoughtTicket.getAllByTicketDateAndCompanyID(selectedDate, companyID, (error, boughtTickets) => {\r  if (error) {\r  console.error(`Error fetching bought tickets for ${selectedDate}:`, error);\r  return res.status(500).json({ error: `Failed to fetch bought tickets for ${selectedDate}` });\r  }\r \r  if (!boughtTickets) {\r   return res.status(200).json({ message: ",
+        "description": "Endpoint to get Bought Tickets by Date and CompanyID",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bought-tickets/date/{companyID}/{selectedDate}": {
+      "get": {
+        "tags": [
+          "Bought Ticket"
+        ],
+        "description": "Endpoint to get all bought tickets of the given companyID in the given date\r  const { companyID, selectedDate } = req.params;\r \r  BoughtTicket.getAllByTicketDateAndCompanyID(selectedDate, companyID, (error, boughtTickets) => {\r  if (error) {\r  console.error(`Error fetching bought tickets for ${selectedDate}:`, error);\r  return res.status(500).json({ error: `Failed to fetch bought tickets for ${selectedDate}` });\r  }\r \r  if (!boughtTickets) {\r   return res.status(200).json({ message: ",
         "parameters": [
           {
             "name": "companyID",
@@ -1289,6 +1295,9 @@
                 "password": {
                   "example": "any"
                 },
+                "status": {
+                  "example": "any"
+                },
                 "companyID": {
                   "example": "any"
                 }
@@ -1381,6 +1390,54 @@
           "Buses"
         ],
         "description": "Endpoint to get all Buses by CompanyID",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/buses/company/{companyID}/private": {
+      "get": {
+        "tags": [
+          "Buses"
+        ],
+        "description": "Endpoint to get private Buses by CompanyID",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/buses/company/{companyID}/bought": {
+      "get": {
+        "tags": [
+          "Buses"
+        ],
+        "description": "Endpoint to get all Buses by CompanyID and Bought Tickets",
         "parameters": [
           {
             "name": "companyID",
@@ -1535,6 +1592,45 @@
         }
       }
     },
+    "/bus/{busID}/date/{date}/{companyID}": {
+      "get": {
+        "tags": [
+          "Buses"
+        ],
+        "description": "Endpoint to get Bought Tickets for today\\'s date by BusID",
+        "parameters": [
+          {
+            "name": "busID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/bus/{busID}/week/{companyID}": {
       "get": {
         "tags": [
@@ -1661,6 +1757,825 @@
           "Buses"
         ],
         "description": "Endpoint to delete a Bus by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bookedBuses/all": {
+      "get": {
+        "tags": [
+          "Booked Buses"
+        ],
+        "description": "Endpoint to get all booked bus",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bookedBuses/{id}": {
+      "get": {
+        "tags": [
+          "Booked Buses"
+        ],
+        "description": "Endpoint to get a booked bus by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bookedBuses/company/{companyID}": {
+      "get": {
+        "tags": [
+          "Booked Buses"
+        ],
+        "description": "Endpoint to get a booked bus by Company ID",
+        "parameters": [
+          {
+            "name": "companyID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bookedBuses/detailed/{id}": {
+      "get": {
+        "tags": [
+          "Booked Buses"
+        ],
+        "description": "Endpoint to get a Detailed Booked Bus by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bookedBuses/read/{id}": {
+      "put": {
+        "tags": [
+          "Booked Buses"
+        ],
+        "description": "Endpoint to read a Booked Bus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bookedBuses/add": {
+      "post": {
+        "tags": [
+          "Booked Buses"
+        ],
+        "description": "Endpoint to create a booked bus",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "customerID": {
+                  "example": "any"
+                },
+                "companyID": {
+                  "example": "any"
+                },
+                "busID": {
+                  "example": "any"
+                },
+                "originLocationID": {
+                  "example": "any"
+                },
+                "destinationLocationID": {
+                  "example": "any"
+                },
+                "tripDate": {
+                  "example": "any"
+                },
+                "numOfPeople": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/bookedBuses/delete/{id}": {
+      "post": {
+        "tags": [
+          "Booked Buses"
+        ],
+        "description": "Endpoint to delete a booked bus by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/locations": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to get all locations",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/location/{id}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to get a Location by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/prices/{fromLocationID}/{toLocationID}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to get prices standards of given Locations",
+        "parameters": [
+          {
+            "name": "fromLocationID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "toLocationID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/locations/add": {
+      "post": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to create a location",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "locationName": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/locations/delete/{id}": {
+      "delete": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Endpoint to delete a location by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/routesStops": {
+      "get": {
+        "tags": [
+          "Routes Stops"
+        ],
+        "description": "Endpoint to get all routes stops",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/routesStop/{id}": {
+      "get": {
+        "tags": [
+          "Routes Stops"
+        ],
+        "description": "Endpoint to get a RoutesStop by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/routesStop/locate/{fromLocationID}/{toLocationID}": {
+      "get": {
+        "tags": [
+          "Routes Stops"
+        ],
+        "description": "Endpoint to get a RoutesStop by ID",
+        "parameters": [
+          {
+            "name": "fromLocationID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "toLocationID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/routesStops/add": {
+      "post": {
+        "tags": [
+          "Routes Stops"
+        ],
+        "description": "Endpoint to create a routes Stop",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "fromLocation": {
+                  "example": "any"
+                },
+                "toLocation": {
+                  "example": "any"
+                },
+                "stops": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/routesStops/delete/{id}": {
+      "delete": {
+        "tags": [
+          "Routes Stops"
+        ],
+        "description": "Endpoint to delete a routesStop by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schools": {
+      "get": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to get all schools",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/school/{id}": {
+      "get": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to get a School by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schools/add": {
+      "post": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to create a school",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "schoolName": {
+                  "example": "any"
+                },
+                "schoolLocation": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schools/{id}": {
+      "delete": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to delete a school by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schoolDestinations": {
+      "get": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to get all school destinations",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schoolDestination/{id}": {
+      "get": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to get a school destination by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schoolDestinations/add": {
+      "post": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to create a school destination",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "destinationName": {
+                  "example": "any"
+                },
+                "destinationLocation": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schoolDestinations/delete/{id}": {
+      "delete": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to delete a school destination by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schoolBuses/all": {
+      "get": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to get all booked bus",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schoolBuses/{id}": {
+      "get": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to get a booked bus by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schoolBuses/detailed/{id}": {
+      "get": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to get a Detailed Booked Bus by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schoolBuses/add": {
+      "post": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to create a booked bus",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "customerID": {
+                  "example": "any"
+                },
+                "companyID": {
+                  "example": "any"
+                },
+                "busID": {
+                  "example": "any"
+                },
+                "schoolID": {
+                  "example": "any"
+                },
+                "destinationID": {
+                  "example": "any"
+                },
+                "tripDate": {
+                  "example": "any"
+                },
+                "numOfPeople": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/schoolBuses/delete/{id}": {
+      "post": {
+        "tags": [
+          "Schools"
+        ],
+        "description": "Endpoint to delete a booked bus by ID",
         "parameters": [
           {
             "name": "id",

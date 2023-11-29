@@ -3,15 +3,17 @@ const pool = require('../utils/mysql');
 const moment = require('moment-timezone');
 
 class BoughtTicket {
-    constructor(id, customerID, ticketFormatID, ticketDate, plaqueNumber, paymentMethodUsed, timeBought, status) {
+    constructor(id, customerID, ticketFormatID, ticketDate, plaqueNumber, paymentMethodUsed, customerNames, originStop, timeBought, status) {
         this.id = id;
         this.customerID = customerID;
         this.ticketFormatID = ticketFormatID;
         this.ticketDate = ticketDate;
         this.plaqueNumber = plaqueNumber;
         this.paymentMethodUsed = paymentMethodUsed;
+        this.customerNames = customerNames;
+        this.originStop = originStop;
         this.timeBought = timeBought;
-        this.status = status
+        this.status = status;
     }
 
     static getAll(callback) {
@@ -29,8 +31,10 @@ class BoughtTicket {
                 row.ticketDate,
                 row.plaqueNumber,
                 row.paymentMethodUsed,
+                row.customerNames,
+                row.originStop,
                 row.timeBought,
-                row.status
+                row.status,
             ));
             callback(null, boughtTickets);
         });
@@ -52,6 +56,8 @@ class BoughtTicket {
                 boughtTicketData.ticketDate,
                 boughtTicketData.plaqueNumber,
                 boughtTicketData.paymentMethodUsed,
+                boughtTicketData.customerNames,
+                boughtTicketData.originStop,
                 // result.insertTimeBought
             );
             callback(null, newBoughtTicket);
@@ -75,8 +81,10 @@ class BoughtTicket {
                 boughtTicketData.ticketDate,
                 boughtTicketData.plaqueNumber,
                 boughtTicketData.paymentMethodUsed,
+                boughtTicketData.customerNames,
+                boughtTicketData.originStop,
                 boughtTicketData.timeBought,
-                boughtTicketData.status
+                boughtTicketData.status,
             );
             callback(null, boughtTicket);
         });
@@ -86,7 +94,7 @@ class BoughtTicket {
         const query = `
           SELECT bt.*, loc_origin.location_name AS originLocation,
           loc_dest.location_name AS destinationLocation,
-          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
+          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, tf.status AS ticketStatus, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
           
           FROM boughttickets bt
           INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
@@ -118,7 +126,6 @@ class BoughtTicket {
                     // Include ticketFormat and company details
                     id: row.id,
                     customerID: row.customerID,
-
                     ticketFormatID: row.ticketFormatID,
                     // ticketDate: row.ticketDate,
                     ticketDate: row.ticketDate,
@@ -127,7 +134,9 @@ class BoughtTicket {
                     plaqueNumber: row.plaqueNumber,
                     paymentMethodUsed: row.paymentMethodUsed,
                     timeBought: row.timeBought,
-                    status: row.status,
+                    customerNames: row.customerNames,
+                    originStop: row.originStop,
+                    // status: row.status,
                     // Include ticketFormat details
                     ticketFormat: {
                         originLocation: row.originLocation,
@@ -140,6 +149,7 @@ class BoughtTicket {
                         route: row.description,
                         plaqueNumber: row.plaqueNumber,
                         maxCapacity: row.maxCapacity,
+                        status: row.ticketStatus
                     },
                     // Include company details
                     company: {
@@ -158,7 +168,7 @@ class BoughtTicket {
         const query = `
           SELECT bt.*,loc_origin.location_name AS originLocation,
           loc_dest.location_name AS destinationLocation,
-          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
+          tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, tf.status AS ticketStatus, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
           
           FROM boughttickets bt
           INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
@@ -207,6 +217,8 @@ class BoughtTicket {
                 paymentMethodUsed: row.paymentMethodUsed,
                 timeBought: row.timeBought,
                 status: row.status,
+                customerNames: row.customerNames,
+                originStop: row.originStop,
                 // Include ticketFormat details
                 ticketFormat: {
                     originLocation: row.originLocation,
@@ -219,6 +231,7 @@ class BoughtTicket {
                     route: row.description,
                     plaqueNumber: row.plaqueNumber,
                     maxCapacity: row.maxCapacity,
+                    status: row.ticketStatus,
                 },
                 // Include company details
                 company: {
@@ -236,7 +249,7 @@ class BoughtTicket {
         const query = `
             SELECT bt.*, us.firstName, us.lastName, us.telephone, us.nationalID, loc_origin.location_name AS originLocation,
             loc_dest.location_name AS destinationLocation,
-            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
+            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, tf.status AS ticketStatus, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
             
             FROM boughttickets bt
             INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
@@ -257,9 +270,11 @@ class BoughtTicket {
             const boughtTickets = results.map(row => ({
                 id: row.id,
                 customerID: row.customerID,
-                customerNames: `${row.firstName} ${row.lastName}`,
+                customerFullname: `${row.firstName} ${row.lastName}`,
                 customerTelephone: row.telephone,
                 customerNID: row.nationalID,
+                customerNames: row.customerNames,
+                originStop: row.originStop,
                 // },
                 // ticketFormatID: row.ticketFormatID,
                 ticketDate: row.ticketDate,
@@ -267,8 +282,9 @@ class BoughtTicket {
                 timeBought: row.timeBought,
                 location: `From ${row.originLocation} to ${row.destinationLocation}`,
                 ticketTime: row.ticketTime,
-                status: row.status,
+                // status: row.status,
                 priceStandard: row.priceStandard,
+                status: row.ticketStatus,
                 route: row.description,
                 plaqueNumber: row.plaqueNumber,
                 maxCapacity: row.maxCapacity,
@@ -283,7 +299,7 @@ class BoughtTicket {
         const query = `
             SELECT bt.*, us.firstName, us.lastName, us.telephone, us.nationalID, loc_origin.location_name AS originLocation,
             loc_dest.location_name AS destinationLocation,
-            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
+            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, tf.status AS ticketStatus, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
             
             FROM boughttickets bt
             INNER JOIN ticketformats tf ON bt.ticketFormatID = tf.id
@@ -309,9 +325,11 @@ class BoughtTicket {
                 return {
                     id: row.id,
                     customerID: row.customerID,
-                    customerNames: `${row.firstName} ${row.lastName}`,
+                    customerFullname: `${row.firstName} ${row.lastName}`,
+                    customerNames: row.customerNames,
                     customerTelephone: row.telephone,
                     customerNID: row.nationalID,
+                    originStop: row.originStop,
                     // },
                     // ticketFormatID: row.ticketFormatID,
                     ticketDate: row.ticketDate,
@@ -319,7 +337,7 @@ class BoughtTicket {
                     timeBought: row.timeBought,
                     location: `From ${row.originLocation} to ${row.destinationLocation}`,
                     ticketTime: row.ticketTime,
-                    status: row.status,
+                    status: row.ticetStatus,
                     priceStandard: row.priceStandard,
                     route: row.description,
                     plaqueNumber: row.plaqueNumber,
@@ -336,7 +354,7 @@ class BoughtTicket {
         const query = `
             SELECT bt.*, us.firstName, us.lastName, us.telephone, us.nationalID, loc_origin.location_name AS originLocation,
             loc_dest.location_name AS destinationLocation,
-            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
+            tf.ticketTime, tf.price, tf.distance, tf.duration, tf.priceStandard, tf.status AS ticketStatus, pa.description, b.plaqueNumber, b.maxCapacity, c.companyName
             bus.plaqueNumber AS plaque
             
             FROM boughttickets bt
@@ -364,9 +382,11 @@ class BoughtTicket {
                 return {
                     id: row.id,
                     customerID: row.customerID,
-                    customerNames: `${row.firstName} ${row.lastName}`,
+                    customerFullname: `${row.firstName} ${row.lastName}`,
+                    customerNames: row.customerNames,
                     customerTelephone: row.telephone,
                     customerNID: row.nationalID,
+                    originStop: row.originStop,
                     // },
                     // ticketFormatID: row.ticketFormatID,
                     ticketDate: row.ticketDate,
@@ -374,7 +394,7 @@ class BoughtTicket {
                     timeBought: row.timeBought,
                     location: `From ${row.originLocation} to ${row.destinationLocation}`,
                     ticketTime: row.ticketTime,
-                    status: row.status,
+                    status: row.ticektStatus,
                     priceStandard: row.priceStandard,
                     route: row.description,
                     plaqueNumber: row.plaqueNumber,
@@ -406,6 +426,8 @@ class BoughtTicket {
                 row.ticketDate,
                 row.plaqueNumber,
                 row.paymentMethodUsed,
+                row.customerNames,
+                row.originStop,
                 row.timeBought,
                 row.status,
             ));
@@ -436,9 +458,10 @@ class BoughtTicket {
                 row.ticketDate,
                 row.plaqueNumber,
                 row.paymentMethodUsed,
+                row.customerNames,
+                row.originStop,
                 row.timeBought,
                 row.status,
-                row.companyID
             ));
             callback(null, boughtTickets);
         });
@@ -459,6 +482,8 @@ class BoughtTicket {
                 row.ticketDate,
                 row.plaqueNumber,
                 row.paymentMethodUsed,
+                row.customerNames,
+                row.originStop,
                 row.timeBought,
                 row.status,
             ));
@@ -491,8 +516,10 @@ class BoughtTicket {
                 row.ticketDate,
                 row.plaqueNumber,
                 row.paymentMethodUsed,
+                row.customerNames,
+                row.originStop,
                 row.timeBought,
-                row.status
+                row.status,
             ));
             callback(null, boughtTickets);
         });
@@ -527,8 +554,10 @@ class BoughtTicket {
                 row.ticketDate,
                 row.plaqueNumber,
                 row.paymentMethodUsed,
+                row.customerNames,
+                row.originStop,
                 row.timeBought,
-                row.status
+                row.status,
             ));
             callback(null, boughtTickets);
         });
@@ -568,8 +597,10 @@ class BoughtTicket {
                 row.ticketDate,
                 row.plaqueNumber,
                 row.paymentMethodUsed,
+                row.customerNames,
+                row.originStop,
                 row.timeBought,
-                row.status
+                row.status,
             ));
             callback(null, boughtTickets);
         });
